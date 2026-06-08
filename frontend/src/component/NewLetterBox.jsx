@@ -1,17 +1,39 @@
 import React from 'react'
 
 function NewLetterBox() {
-    const handleSubmit = ()=>{
+    const handleSubmit = (e)=>{
         e.preventDefault()
     }
   return (
-    <div className='w-[100%] h-[40vh]  bg-gradient-to-l from-[#141414] to-[#0c2025] flex items-center justify-start gap-[10px] flex-col'>
-      <p className='md:text-[30px] text-[20px] text-[#a5faf7] font-semibold px-[20px]'>Subscribe now & get 20% off</p>
-      <p className='md:text-[18px] text-[14px] text-center text-blue-100 font-semibold px-[20px]'>Subscribe now and enjoy exclusive savings, special deals, and early access to new collections.</p>
-      <form action="" onSubmit={handleSubmit} className='w-[100%] h-[30%] md:h-[50%] flex items-center justify-center mt-[20px] gap-[20px] px-[20px]'>
-        <input type="text" placeholder='Enter Your Email' className='placeholder:text-[black] bg-slate-300 w-[600px] max-w-[60%] h-[40px]  px-[20px] rounded-lg shadow-sm shadow-black' required />
-        <button type='submit' className='text-[15px] md:text-[16px] px-[10px] md:px-[30px] py-[12px] md:py-[10px]  hover:bg-slate-500 cursor-pointer bg-[#2e3030c9]  text-white flex items-center justify-center gap-[20px]  border-[1px] border-[#80808049]  rounded-lg shadow-sm shadow-black'>Subscribe</button>
-      </form>
+    <div className='w-full bg-[#110e10] py-24 flex flex-col items-center justify-center relative overflow-hidden'>
+        
+        {/* Decorative Background Elements */}
+        <div className="absolute top-[-50%] left-[-10%] w-[500px] h-[500px] border-[1px] border-[#ffffff05] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-[-30%] right-[-10%] w-[400px] h-[400px] border-[1px] border-[#ffffff05] rounded-full pointer-events-none"></div>
+
+        <div className='relative z-10 flex flex-col items-center text-center px-8'>
+            <h3 className='text-[#e09e86] text-[12px] font-bold tracking-[0.2em] mb-4 uppercase'>Join the Club</h3>
+            <h2 className='text-[35px] md:text-[50px] font-serif text-white mb-4 leading-tight'>
+                <span className='font-light italic text-[#e09e86]'>Subscribe</span> & Get 20% Off
+            </h2>
+            <p className='text-[#808080] text-[15px] max-w-[500px] mb-10 leading-relaxed'>
+                Join our exclusive mailing list and enjoy instant savings, special deals, and early access to new collections directly to your inbox.
+            </p>
+
+            <form onSubmit={handleSubmit} className='w-full max-w-[600px] flex flex-col sm:flex-row gap-4'>
+                <input 
+                    type="email" 
+                    placeholder='Enter your email address' 
+                    className='flex-1 bg-[#1a1517] h-14 border border-[#ffffff15] rounded-lg px-6 text-white placeholder:text-[#ffffff40] outline-none focus:border-[#e09e86] transition-colors shadow-lg' 
+                    required 
+                />
+                <button 
+                    type='submit' 
+                    className='h-14 bg-gradient-to-r from-[#d97d66] to-[#e4ac7a] text-white px-8 rounded-lg text-[13px] font-bold tracking-[0.1em] uppercase hover:opacity-90 transition-opacity shadow-lg shrink-0'>
+                    Subscribe
+                </button>
+            </form>
+        </div>
     </div>
   )
 }

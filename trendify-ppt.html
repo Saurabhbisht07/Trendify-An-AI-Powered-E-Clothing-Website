@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trendify – Project Presentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&display=swap');
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --accent:#e09e86;--accent2:#d97d66;--blue:#4fc3f7;
+      --green:#81c784;--purple:#ce93d8;--yellow:#fff176;
+      --bg:#0d0b0e;--surface:#1a1517;--border:#ffffff18;
+      --text:#e0e0e0;--muted:#888;
+    }
+
+    body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);height:100vh;overflow:hidden;user-select:none;}
+
+    /* ── Slideshow wrapper ── */
+    #ppt{position:relative;width:100vw;height:100vh;overflow:hidden;}
+
+    /* ── Navigation ── */
+    nav{
+      position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+      z-index:999;display:flex;align-items:center;gap:14px;
+      background:#1a151790;backdrop-filter:blur(20px);
+      border:1px solid var(--border);border-radius:100px;padding:10px 20px;
+    }
+    .nav-btn{
+      width:38px;height:38px;border-radius:50%;border:1px solid var(--border);
+      background:transparent;color:var(--text);font-size:18px;cursor:pointer;
+      transition:all .2s;display:flex;align-items:center;justify-content:center;
+    }
+    .nav-btn:hover{background:var(--accent);border-color:var(--accent);color:#000;}
+    #slideCounter{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.5px;min-width:60px;text-align:center;}
+    .nav-dots{display:flex;gap:6px;}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .3s;}
+    .dot.active{background:var(--accent);width:22px;border-radius:10px;}
+
+    /* ── Keys hint ── */
+    .keys-hint{position:fixed;top:18px;right:24px;font-size:11px;color:var(--muted);background:#1a151770;backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:8px;padding:6px 14px;z-index:998;}
+
+    /* ── Slide base ── */
+    .slide{
+      position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;
+      padding:60px 80px;opacity:0;pointer-events:none;
+      transition:opacity .6s ease, transform .6s ease;
+      transform:translateX(60px);
+    }
+    .slide.active{opacity:1;pointer-events:auto;transform:translateX(0);}
+    .slide.leaving{opacity:0;transform:translateX(-60px);}
+
+    /* ── Background art ── */
+    .slide::before{
+      content:'';position:absolute;inset:0;pointer-events:none;
+      background:radial-gradient(ellipse at 10% 50%, #e09e8608 0%,transparent 60%),
+                  radial-gradient(ellipse at 90% 20%, #4fc3f705 0%,transparent 60%);
+    }
+
+    /* ── Slide number chip ── */
+    .slide-chip{
+      position:absolute;top:28px;left:40px;font-size:11px;color:var(--muted);
+      font-weight:700;letter-spacing:2px;text-transform:uppercase;
+      background:#ffffff08;border:1px solid var(--border);border-radius:20px;padding:4px 14px;
+    }
+
+    /* ════════ SLIDE TYPE: TITLE ════════ */
+    .s-title{background:radial-gradient(ellipse at 20% 50%, #231b1f 0%,#0d0b0e 70%);}
+    .s-title .logo-ring{
+      width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));
+      display:flex;align-items:center;justify-content:center;font-size:48px;
+      box-shadow:0 0 60px #e09e8660;margin-bottom:32px;
+      animation:ringPulse 3s ease-in-out infinite;
+    }
+    @keyframes ringPulse{0%,100%{box-shadow:0 0 60px #e09e8660;}50%{box-shadow:0 0 100px #e09e86a0;}}
+    .s-title h1{font-family:'Playfair Display',serif;font-size:72px;font-weight:900;letter-spacing:3px;color:#fff;text-align:center;line-height:1;}
+    .s-title .tagline{font-size:18px;color:var(--accent);letter-spacing:4px;margin-top:12px;font-weight:300;}
+    .s-title .subtitle{font-size:14px;color:var(--muted);margin-top:24px;text-align:center;line-height:1.8;}
+    .s-title .badges{display:flex;gap:12px;margin-top:36px;flex-wrap:wrap;justify-content:center;}
+    .badge{padding:8px 20px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:1px;border:1px solid;}
+    .badge-orange{background:#e09e8615;border-color:var(--accent);color:var(--accent);}
+    .badge-blue{background:#4fc3f715;border-color:var(--blue);color:var(--blue);}
+    .badge-green{background:#81c78415;border-color:var(--green);color:var(--green);}
+    .badge-purple{background:#ce93d815;border-color:var(--purple);color:var(--purple);}
+
+    /* ════════ SLIDE TYPE: SECTION BREAK ════════ */
+    .s-section{
+      background:linear-gradient(135deg,#1a1517,#0d0b0e);
+      align-items:flex-start;
+    }
+    .section-num{font-size:120px;font-weight:900;color:#ffffff06;line-height:1;position:absolute;left:60px;top:40px;font-family:'Playfair Display',serif;}
+    .section-tag{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;}
+    .section-title{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:#fff;line-height:1.15;max-width:700px;}
+    .section-desc{font-size:16px;color:var(--muted);line-height:1.9;max-width:600px;margin-top:20px;}
+
+    /* ════════ SLIDE TYPE: CONTENT ════════ */
+    .s-content{align-items:flex-start;}
+    .slide-header{margin-bottom:36px;width:100%;}
+    .slide-label{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;}
+    .slide-title{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;color:#fff;}
+    .slide-divider{width:60px;height:3px;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;margin-top:12px;}
+
+    /* grid & cards */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;width:100%;}
+    .card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:16px;padding:22px 24px;transition:all .3s;
+      animation:fadeUp .5s ease both;
+    }
+    .card:nth-child(1){animation-delay:.1s}
+    .card:nth-child(2){animation-delay:.2s}
+    .card:nth-child(3){animation-delay:.3s}
+    .card:nth-child(4){animation-delay:.4s}
+    .card:nth-child(5){animation-delay:.5s}
+    .card:nth-child(6){animation-delay:.6s}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+    .card-icon{font-size:28px;margin-bottom:12px;}
+    .card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
+    .card-desc{font-size:12px;color:var(--muted);line-height:1.7;}
+    .card-accent{border-left:3px solid var(--accent);}
+    .card-blue{border-left:3px solid var(--blue);}
+    .card-green{border-left:3px solid var(--green);}
+    .card-purple{border-left:3px solid var(--purple);}
+    .card-yellow{border-left:3px solid var(--yellow);}
+
+    /* tech stack pills */
+    .tech-grid{display:flex;flex-wrap:wrap;gap:12px;width:100%;}
+    .tech-pill{
+      display:flex;align-items:center;gap:10px;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:12px 18px;font-size:13px;font-weight:600;
+      animation:fadeUp .5s ease both;min-width:155px;
+    }
+    .tech-icon{font-size:22px;}
+
+    /* flow steps */
+    .flow-list{width:100%;display:flex;flex-direction:column;gap:12px;}
+    .flow-step{
+      display:flex;align-items:center;gap:18px;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:16px 20px;
+      animation:fadeUp .5s ease both;
+    }
+    .step-circle{
+      width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:14px;font-weight:800;flex-shrink:0;
+    }
+    .step-info{flex:1;}
+    .step-name{font-size:13px;font-weight:700;color:var(--text);}
+    .step-api{font-size:11px;color:var(--muted);margin-top:2px;}
+    .step-arrow{font-size:18px;color:var(--muted);}
+
+    /* two-column layout */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:36px;width:100%;}
+
+    /* stat boxes */
+    .stat-box{
+      background:linear-gradient(135deg,var(--surface),#251d20);
+      border:1px solid var(--border);border-radius:16px;
+      padding:24px;text-align:center;
+      animation:fadeUp .5s ease both;
+    }
+    .stat-num{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .stat-label{font-size:12px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:1px;}
+
+    /* list items */
+    .bullet-list{list-style:none;display:flex;flex-direction:column;gap:12px;width:100%;}
+    .bullet-list li{
+      display:flex;align-items:flex-start;gap:12px;font-size:14px;color:var(--muted);line-height:1.6;
+      animation:fadeUp .5s ease both;
+    }
+    .bullet-list li::before{content:'▸';color:var(--accent);font-weight:700;flex-shrink:0;margin-top:2px;}
+
+    /* dfd node mini */
+    .dfd-mini{display:flex;flex-direction:column;gap:10px;width:100%;}
+    .dfd-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .dnode{
+      padding:8px 16px;border-radius:30px;font-size:12px;font-weight:600;
+      border:1.5px solid;animation:fadeUp .4s ease both;
+    }
+    .dnode-entity{background:#192130;border-color:var(--blue);color:var(--blue);}
+    .dnode-process{background:#211520;border-color:var(--accent);color:var(--accent);border-radius:30px;}
+    .dnode-store{background:#172017;border-color:var(--green);color:var(--green);border-radius:4px;}
+    .dnode-service{background:#1f1520;border-color:var(--purple);color:var(--purple);}
+    .dnode-decision{background:#211f15;border-color:var(--yellow);color:var(--yellow);}
+    .darrow{font-size:18px;color:var(--muted);}
+    .darrow-label{font-size:10px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;}
+
+    /* highlight quote */
+    .quote-block{
+      border-left:4px solid var(--accent);padding:20px 28px;
+      background:#e09e8608;border-radius:0 12px 12px 0;
+      font-size:15px;color:var(--text);font-style:italic;line-height:1.8;
+      width:100%;animation:fadeUp .6s ease both;
+    }
+
+    /* thank you slide */
+    .s-end{background:radial-gradient(ellipse at center, #231b1f 0%,#0d0b0e 70%);}
+    .end-ring{
+      width:160px;height:160px;border-radius:50%;
+      background:linear-gradient(135deg,var(--accent2),var(--accent));
+      display:flex;align-items:center;justify-content:center;font-size:64px;
+      box-shadow:0 0 80px #e09e8670;margin-bottom:36px;
+      animation:ringPulse 3s ease-in-out infinite;
+    }
+    .end-title{font-family:'Playfair Display',serif;font-size:60px;font-weight:900;color:#fff;margin-bottom:10px;}
+    .end-sub{font-size:18px;color:var(--accent);letter-spacing:3px;font-weight:300;}
+    .end-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px;width:100%;max-width:700px;}
+    .end-card{background:#ffffff08;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+    .end-card-icon{font-size:24px;margin-bottom:6px;}
+    .end-card-label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;}
+    .end-card-val{font-size:14px;font-weight:700;color:var(--text);}
+
+    /* progress line */
+    #progress-line{
+      position:fixed;top:0;left:0;height:2px;
+      background:linear-gradient(90deg,var(--accent2),var(--accent));
+      transition:width .5s ease;z-index:1000;
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-line" style="width:0%"></div>
+<div class="keys-hint">← → Arrow Keys to Navigate</div>
+
+<!-- ════════════════════════════════ SLIDES ═════════════════════════════════ -->
+<div id="ppt">
+
+  <!-- ── 1. TITLE ── -->
+  <div class="slide s-title active" id="s1">
+    <div class="logo-ring">👗</div>
+    <h1>TRENDIFY</h1>
+    <p class="tagline">FASHION E-COMMERCE PLATFORM</p>
+    <p class="subtitle">A full-stack MERN application with AI-powered stylist,<br>voice navigation, smart size recommender & admin analytics.</p>
+    <div class="badges">
+      <span class="badge badge-orange">React.js</span>
+      <span class="badge badge-green">Node.js + Express</span>
+      <span class="badge badge-blue">MongoDB Atlas</span>
+      <span class="badge badge-purple">Gemini AI</span>
+      <span class="badge badge-orange">Razorpay</span>
+      <span class="badge badge-blue">Cloudinary</span>
+    </div>
+  </div>
+
+  <!-- ── 2. AGENDA ── -->
+  <div class="slide s-content" id="s2">
+    <div class="slide-chip">OVERVIEW</div>
+    <div class="slide-header">
+      <div class="slide-label">What We'll Cover</div>
+      <div class="slide-title">Presentation Agenda</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="grid-2">
+      <div class="card card-blue"><div class="card-icon">🎯</div><div class="card-title">01 — Project Overview</div><div class="card-desc">What Trendify is, the problem it solves, and the key goals of the platform.</div></div>
+      <div class="card card-orange"><div class="card-icon">⚙️</div><div class="card-title">02 — Tech Stack</div><div class="card-desc">MERN stack architecture with 3rd party integrations: Cloudinary, Razorpay, Gemini AI.</div></div>
+      <div class="card card-green"><div class="card-icon">🗺️</div><div class="card-title">03 — System Architecture (DFD)</div><div class="card-desc">Level 0 Context Diagram showing all system entities, processes and data stores.</div></div>
+      <div class="card card-purple"><div class="card-icon">🔐</div><div class="card-title">04 — Auth & Shopping Flow</div><div class="card-desc">Login, Google OAuth, product browsing, AI size recommender and cart management.</div></div>
+      <div class="card card-yellow"><div class="card-icon">🛒</div><div class="card-title">05 — Order & Payment</div><div class="card-desc">Cart → address → Razorpay / COD → order creation and confirmation flow.</div></div>
+      <div class="card card-orange"><div class="card-icon">🤖</div><div class="card-title">06 — AI Features & Admin</div><div class="card-desc">AI Stylist chatbot, voice assistant, admin dashboard and analytics panel.</div></div>
+    </div>
+  </div>
+
+  <!-- ── 3. PROJECT OVERVIEW ── -->
+  <div class="slide s-section" id="s3">
+    <div class="section-num">01</div>
+    <div class="slide-chip">SECTION</div>
+    <p class="section-tag">Project Overview</p>
+    <h2 class="section-title">What is<br>Trendify?</h2>
+    <p class="section-desc">A modern, Gen-Z focused fashion e-commerce platform combining slick UI design with AI-powered shopping tools — built as a complete production-ready MERN stack application.</p>
+  </div>
+
+  <!-- ── 4. PROJECT DETAILS ── -->
+  <div class="slide s-content" id="s4">
+    <div class="slide-chip">01 — OVERVIEW</div>
+    <div class="slide-header">
+      <div class="slide-label">Project Details</div>
+      <div class="slide-title">Why Trendify?</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <ul class="bullet-list">
+          <li>Full-stack MERN (MongoDB, Express, React, Node) e-commerce platform</li>
+          <li>Targets Gen-Z users with a sleek dark-mode glassmorphism aesthetic</li>
+          <li>AI-powered fashion assistant using Google's Gemini 2.0 Flash API</li>
+          <li>Voice-controlled navigation using Web Speech API</li>
+          <li>ML-based size recommender (BMI decision tree algorithm)</li>
+          <li>Secure payment gateway via Razorpay + Cash on Delivery support</li>
+          <li>Admin panel with product management, order tracking and analytics</li>
+          <li>Image CDN via Cloudinary for fast, scalable product images</li>
+        </ul>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="stat-box"><div class="stat-num">3</div><div class="stat-label">MODULES (Frontend / Backend / Admin)</div></div>
+        <div class="stat-box"><div class="stat-num">6+</div><div class="stat-label">API ROUTE COLLECTIONS</div></div>
+        <div class="stat-box"><div class="stat-num">2</div><div class="stat-label">AI INTEGRATIONS</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5. TECH STACK ── -->
+  <div class="slide s-section" id="s5">
+    <div class="section-num">02</div>
+    <div class="slide-chip">SECTION</div>
+    <p class="section-tag">Tech Stack</p>
+    <h2 class="section-title">Built With<br>Modern Tech</h2>
+    <p class="section-desc">A carefully chosen stack that balances developer experience, scalability and performance for a production-grade application.</p>
+  </div>
+
+  <!-- ── 6. TECH DETAILS ── -->
+  <div class="slide s-content" id="s6">
+    <div class="slide-chip">02 — TECH STACK</div>
+    <div class="slide-header">
+      <div class="slide-label">Technologies Used</div>
+      <div class="slide-title">Full Tech Stack</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-pill" style="animation-delay:.1s"><span class="tech-icon">⚛️</span><div><div style="font-size:13px;font-weight:700;color:var(--blue);">React.js</div><div style="font-size:11px;color:var(--muted);">Frontend UI</div></div></div>
+      <div class="tech-pill" style="animation-delay:.15s"><span class="tech-icon">🟢</span><div><div style="font-size:13px;font-weight:700;color:var(--green);">Node.js + Express</div><div style="font-size:11px;color:var(--muted);">REST API Server</div></div></div>
+      <div class="tech-pill" style="animation-delay:.2s"><span class="tech-icon">🍃</span><div><div style="font-size:13px;font-weight:700;color:var(--green);">MongoDB Atlas</div><div style="font-size:11px;color:var(--muted);">Cloud Database</div></div></div>
+      <div class="tech-pill" style="animation-delay:.25s"><span class="tech-icon">🔑</span><div><div style="font-size:13px;font-weight:700;color:var(--yellow);">JWT + bcryptjs</div><div style="font-size:11px;color:var(--muted);">Auth & Security</div></div></div>
+      <div class="tech-pill" style="animation-delay:.3s"><span class="tech-icon">🤖</span><div><div style="font-size:13px;font-weight:700;color:var(--purple);">Gemini 2.0 Flash</div><div style="font-size:11px;color:var(--muted);">AI Stylist</div></div></div>
+      <div class="tech-pill" style="animation-delay:.35s"><span class="tech-icon">🎙️</span><div><div style="font-size:13px;font-weight:700;color:var(--blue);">Web Speech API</div><div style="font-size:11px;color:var(--muted);">Voice Control</div></div></div>
+      <div class="tech-pill" style="animation-delay:.4s"><span class="tech-icon">💳</span><div><div style="font-size:13px;font-weight:700;color:var(--accent);">Razorpay SDK</div><div style="font-size:11px;color:var(--muted);">Payment Gateway</div></div></div>
+      <div class="tech-pill" style="animation-delay:.45s"><span class="tech-icon">☁️</span><div><div style="font-size:13px;font-weight:700;color:var(--blue);">Cloudinary CDN</div><div style="font-size:11px;color:var(--muted);">Image Hosting</div></div></div>
+      <div class="tech-pill" style="animation-delay:.5s"><span class="tech-icon">🔥</span><div><div style="font-size:13px;font-weight:700;color:var(--accent);">Firebase OAuth</div><div style="font-size:11px;color:var(--muted);">Google Login</div></div></div>
+      <div class="tech-pill" style="animation-delay:.55s"><span class="tech-icon">🚀</span><div><div style="font-size:13px;font-weight:700;color:var(--blue);">Vite</div><div style="font-size:11px;color:var(--muted);">Build Tool</div></div></div>
+      <div class="tech-pill" style="animation-delay:.6s"><span class="tech-icon">📦</span><div><div style="font-size:13px;font-weight:700;color:var(--green);">Mongoose ORM</div><div style="font-size:11px;color:var(--muted);">DB Modelling</div></div></div>
+      <div class="tech-pill" style="animation-delay:.65s"><span class="tech-icon">🔄</span><div><div style="font-size:13px;font-weight:700;color:var(--green);">Nodemon</div><div style="font-size:11px;color:var(--muted);">Dev Hot Reload</div></div></div>
+    </div>
+  </div>
+
+  <!-- ── 7. DFD SECTION ── -->
+  <div class="slide s-section" id="s7">
+    <div class="section-num">03</div>
+    <div class="slide-chip">SECTION</div>
+    <p class="section-tag">System Architecture</p>
+    <h2 class="section-title">Data Flow<br>Diagrams</h2>
+    <p class="section-desc">A visual breakdown of how data moves through Trendify — from user requests to database writes, external services, and AI responses.</p>
+  </div>
+
+  <!-- ── 8. DFD LEVEL 0 ── -->
+  <div class="slide s-content" id="s8">
+    <div class="slide-chip">03 — ARCHITECTURE</div>
+    <div class="slide-header">
+      <div class="slide-label">Level 0 — Context Diagram</div>
+      <div class="slide-title">System Overview</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="dfd-mini">
+      <div class="dfd-row">
+        <div class="dnode dnode-entity">👤 Customer</div>
+        <div class="darrow-label"><span class="darrow">→</span><span style="font-size:10px;color:var(--blue);">Requests</span></div>
+        <div class="dnode dnode-process">⚡ TRENDIFY SYSTEM</div>
+        <div class="darrow-label"><span class="darrow">→</span><span style="font-size:10px;color:var(--green);">Read/Write</span></div>
+        <div class="dnode dnode-store">🗄️ MongoDB Atlas</div>
+      </div>
+      <div class="dfd-row" style="margin-left:180px;">
+        <div class="darrow-label"><span class="darrow">↑</span><span style="font-size:10px;color:var(--accent);">Manage</span></div>
+        <div style="width:80px;"></div>
+        <div class="darrow-label"><span class="darrow">↑</span><span style="font-size:10px;color:var(--purple);">Images</span></div>
+      </div>
+      <div class="dfd-row">
+        <div class="dnode dnode-entity" style="margin-left:80px;">🛡️ Admin</div>
+        <div style="width:80px;"></div>
+        <div class="dnode dnode-service">☁️ Cloudinary CDN</div>
+        <div class="darrow" style="margin:0 12px;">←</div>
+        <div class="dnode dnode-service">💳 Razorpay / Google</div>
+      </div>
+    </div>
+    <div class="quote-block" style="margin-top:24px;">
+      The entire Trendify system acts as the central processing hub — all data flows in from Customers and Admins, gets processed through Express.js, persisted in MongoDB, and served back via REST APIs. External services like Cloudinary and Razorpay are integrated as sidecar services.
+    </div>
+  </div>
+
+  <!-- ── 9. AUTH FLOW ── -->
+  <div class="slide s-section" id="s9">
+    <div class="section-num">04</div>
+    <div class="slide-chip">SECTION</div>
+    <p class="section-tag">Authentication</p>
+    <h2 class="section-title">Login &<br>Auth Flow</h2>
+    <p class="section-desc">Two authentication paths: traditional email/password with bcrypt hashing, and Google OAuth via Firebase — both converge at a JWT issuance gateway.</p>
+  </div>
+
+  <!-- ── 10. AUTH DETAILS ── -->
+  <div class="slide s-content" id="s10">
+    <div class="slide-chip">04 — AUTH</div>
+    <div class="slide-header">
+      <div class="slide-label">Authentication & Security</div>
+      <div class="slide-title">Login Flow</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="flow-list">
+      <div class="flow-step" style="animation-delay:.1s">
+        <div class="step-circle" style="background:#4fc3f720;color:var(--blue);">1</div>
+        <div class="step-info"><div class="step-name">User Submits Credentials</div><div class="step-api">POST /api/auth/login — email + password sent to backend</div></div>
+        <div class="dnode dnode-entity" style="font-size:11px;">👤 User</div>
+        <div class="darrow">→</div>
+        <div class="dnode dnode-process" style="font-size:11px;">Enter Credentials</div>
+      </div>
+      <div class="flow-step" style="animation-delay:.2s">
+        <div class="step-circle" style="background:#81c78420;color:var(--green);">2</div>
+        <div class="step-info"><div class="step-name">MongoDB Lookup + bcrypt Compare</div><div class="step-api">Users Collection queried → password hash compared using bcryptjs</div></div>
+        <div class="dnode dnode-process" style="font-size:11px;">Validate</div>
+        <div class="darrow">→</div>
+        <div class="dnode dnode-store" style="font-size:11px;">🗄️ Users DB</div>
+      </div>
+      <div class="flow-step" style="animation-delay:.3s">
+        <div class="step-circle" style="background:#fff17620;color:var(--yellow);">3</div>
+        <div class="step-info"><div class="step-name">Decision Gateway</div><div class="step-api">Valid? → Issue JWT HttpOnly Cookie. Invalid? → 401 Error returned.</div></div>
+        <div class="dnode dnode-decision" style="font-size:11px;">Valid?</div>
+        <div class="darrow">→</div>
+        <div class="dnode dnode-process" style="font-size:11px;">Issue JWT</div>
+      </div>
+      <div class="flow-step" style="animation-delay:.4s">
+        <div class="step-circle" style="background:#ce93d820;color:var(--purple);">4</div>
+        <div class="step-info"><div class="step-name">Google OAuth Alternative</div><div class="step-api">Firebase sends ID token → Google Auth API verifies → merged into same JWT gateway</div></div>
+        <div class="dnode dnode-service" style="font-size:11px;">🔵 Google Auth</div>
+        <div class="darrow">→</div>
+        <div class="dnode dnode-decision" style="font-size:11px;">Valid?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 11. SHOPPING FLOW ── -->
+  <div class="slide s-content" id="s11">
+    <div class="slide-chip">04 — SHOPPING</div>
+    <div class="slide-header">
+      <div class="slide-label">Product Browsing & Cart</div>
+      <div class="slide-title">Shopping Flow</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="grid-2">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card card-blue"><div class="card-icon">📋</div><div class="card-title">Browse Collections</div><div class="card-desc">GET /api/product/list fetches all products from MongoDB. Filtered client-side by category, subCategory and search text using React state.</div></div>
+        <div class="card card-purple"><div class="card-icon">☁️</div><div class="card-title">Cloudinary Images</div><div class="card-desc">Product images are served from Cloudinary CDN using URLs stored in MongoDB — supporting up to 4 images per product with a gallery view.</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card card-accent"><div class="card-icon">🧠</div><div class="card-title">AI Size Recommender</div><div class="card-desc">User inputs height & weight via sliders. A BMI-based decision tree algorithm instantly calculates the ideal size (S/M/L/XL) with a 94% confidence score shown.</div></div>
+        <div class="card card-green"><div class="card-icon">🛒</div><div class="card-title">Add to Cart</div><div class="card-desc">POST /api/cart/add saves productId + chosen size to the user's Cart Collection in MongoDB. Cart persists across sessions.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 12. ORDER SECTION ── -->
+  <div class="slide s-section" id="s12">
+    <div class="section-num">05</div>
+    <div class="slide-chip">SECTION</div>
+    <p class="section-tag">Order & Payments</p>
+    <h2 class="section-title">Checkout &<br>Payment Flow</h2>
+    <p class="section-desc">A dual-path payment system — Razorpay for secure card payments and a zero-friction Cash on Delivery option, both converging into a unified order record.</p>
+  </div>
+
+  <!-- ── 13. ORDER FLOW ── -->
+  <div class="slide s-content" id="s13">
+    <div class="slide-chip">05 — ORDER</div>
+    <div class="slide-header">
+      <div class="slide-label">Order Placement</div>
+      <div class="slide-title">Checkout Flow</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="flow-list">
+      <div class="flow-step" style="animation-delay:.1s">
+        <div class="step-circle" style="background:#4fc3f720;color:var(--blue);">1</div>
+        <div class="step-info"><div class="step-name">View Cart & Enter Address</div><div class="step-api">GET /api/cart/get → React displays items, user fills shipping address form</div></div>
+        <div class="dnode dnode-entity" style="font-size:11px;">👤 Customer</div>
+        <div class="darrow">→</div>
+        <div class="dnode dnode-store" style="font-size:11px;">🗄️ Cart DB</div>
+      </div>
+      <div class="flow-step" style="animation-delay:.2s">
+        <div class="step-circle" style="background:#fff17620;color:var(--yellow);">2</div>
+        <div class="step-info"><div class="step-name">Payment Method Decision</div><div class="step-api">User selects Online (Razorpay) or COD — two completely different processing paths</div></div>
+        <div class="dnode dnode-decision" style="font-size:11px;">Online or COD?</div>
+      </div>
+      <div class="flow-step" style="animation-delay:.3s">
+        <div class="step-circle" style="background:#ce93d820;color:var(--purple);">3</div>
+        <div class="step-info"><div class="step-name">Razorpay Checkout</div><div class="step-api">Backend creates Razorpay order → Frontend opens modal → Payment verified → Order created</div></div>
+        <div class="dnode dnode-service" style="font-size:11px;">💳 Razorpay</div>
+        <div class="darrow">→</div>
+        <div class="dnode dnode-process" style="font-size:11px;">Verify</div>
+      </div>
+      <div class="flow-step" style="animation-delay:.4s">
+        <div class="step-circle" style="background:#81c78420;color:var(--green);">4</div>
+        <div class="step-info"><div class="step-name">Order Saved & Cart Cleared</div><div class="step-api">POST /api/order/place writes to Orders Collection, removes cart items, returns confirmation</div></div>
+        <div class="dnode dnode-store" style="font-size:11px;">🗄️ Orders DB</div>
+        <div class="darrow">+</div>
+        <div class="dnode dnode-entity" style="font-size:11px;">✅ Confirmed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 14. AI SECTION ── -->
+  <div class="slide s-section" id="s14">
+    <div class="section-num">06</div>
+    <div class="slide-chip">SECTION</div>
+    <p class="section-tag">AI Features</p>
+    <h2 class="section-title">AI-Powered<br>Experience</h2>
+    <p class="section-desc">Trendify integrates two AI systems — a Generative AI Fashion Stylist powered by Google Gemini and a Voice Navigation Assistant using the Web Speech API.</p>
+  </div>
+
+  <!-- ── 15. AI FEATURES ── -->
+  <div class="slide s-content" id="s15">
+    <div class="slide-chip">06 — AI</div>
+    <div class="slide-header">
+      <div class="slide-label">Artificial Intelligence</div>
+      <div class="slide-title">AI Integrations</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="grid-2">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card" style="border-left:3px solid var(--purple);background:linear-gradient(135deg,#211520,#1a1517);">
+          <div class="card-icon">✨</div>
+          <div class="card-title" style="color:var(--purple);">AI Fashion Stylist</div>
+          <div class="card-desc">Floating chat widget powered by Gemini 2.0 Flash. Users ask fashion questions and receive personalized outfit advice in real-time. Includes a smart rule-based fallback for rate limits.</div>
+        </div>
+        <div class="card card-blue">
+          <div class="card-icon">🎙️</div>
+          <div class="card-title">Voice Assistant</div>
+          <div class="card-desc">Web Speech API captures voice commands. Intent detection navigates users to pages (Home, Cart, Collections, Contact) or performs in-app searches — entirely hands-free.</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card card-accent">
+          <div class="card-icon">🧠</div>
+          <div class="card-title">Size Recommender ML</div>
+          <div class="card-desc">A BMI-based decision tree algorithm takes height (cm) & weight (kg) inputs and recommends S/M/L/XL. Shows a confidence percentage and auto-selects the size.</div>
+        </div>
+        <div class="dfd-mini" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;gap:12px;">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;">AI STYLIST FLOW</div>
+          <div class="dfd-row">
+            <div class="dnode dnode-entity" style="font-size:11px;">User</div>
+            <span class="darrow">→</span>
+            <div class="dnode dnode-process" style="font-size:11px;">POST /ask</div>
+            <span class="darrow">→</span>
+            <div class="dnode dnode-decision" style="font-size:11px;">Gemini?</div>
+          </div>
+          <div class="dfd-row" style="margin-left:180px;">
+            <div class="dnode dnode-service" style="font-size:11px;">YES → 🤖 Gemini</div>
+          </div>
+          <div class="dfd-row" style="margin-left:180px;">
+            <div class="dnode dnode-process" style="font-size:11px;">NO → ⚡ Rule Engine</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 16. ADMIN SECTION ── -->
+  <div class="slide s-content" id="s16">
+    <div class="slide-chip">06 — ADMIN</div>
+    <div class="slide-header">
+      <div class="slide-label">Administration</div>
+      <div class="slide-title">Admin Panel Features</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="grid-3">
+      <div class="card card-yellow"><div class="card-icon">🔐</div><div class="card-title">Secure Admin Login</div><div class="card-desc">Separate admin credentials in .env. Issues a scoped Admin JWT token with elevated permissions.</div></div>
+      <div class="card card-accent"><div class="card-icon">📦</div><div class="card-title">Product Management</div><div class="card-desc">Add, edit and delete products. Images uploaded via Multer → Cloudinary. Supports 4 images per product.</div></div>
+      <div class="card card-blue"><div class="card-icon">📊</div><div class="card-title">Analytics Dashboard</div><div class="card-desc">MongoDB aggregation pipeline shows total revenue, order count and user count with live charts.</div></div>
+      <div class="card card-green"><div class="card-icon">🚚</div><div class="card-title">Order Management</div><div class="card-desc">View all customer orders. Update delivery status: Pending → Processing → Shipped → Delivered.</div></div>
+      <div class="card card-purple"><div class="card-icon">💼</div><div class="card-title">Job Applications</div><div class="card-desc">Review career applications submitted via Contact page. Update status: Pending / Accepted / Rejected.</div></div>
+      <div class="card card-accent"><div class="card-icon">👥</div><div class="card-title">User Management</div><div class="card-desc">View registered users, their cart data and complete order history from the admin interface.</div></div>
+    </div>
+  </div>
+
+  <!-- ── 17. KEY FEATURES ── -->
+  <div class="slide s-content" id="s17">
+    <div class="slide-chip">FEATURES</div>
+    <div class="slide-header">
+      <div class="slide-label">Platform Highlights</div>
+      <div class="slide-title">Key Features</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <ul class="bullet-list">
+          <li style="animation-delay:.1s">Dark mode glassmorphism UI with premium micro-animations</li>
+          <li style="animation-delay:.15s">Multi-image product gallery with Cloudinary CDN delivery</li>
+          <li style="animation-delay:.2s">Smart search & category filter — all client-side, zero latency</li>
+          <li style="animation-delay:.25s">Sticky "Buy Now" bar that appears on product page scroll</li>
+          <li style="animation-delay:.3s">AI Virtual Stylist chatbot with Gemini 2.0 Flash integration</li>
+          <li style="animation-delay:.35s">Voice assistant for hands-free navigation and search</li>
+          <li style="animation-delay:.4s">BMI size recommender with confidence percentage display</li>
+          <li style="animation-delay:.45s">Razorpay + Cash on Delivery dual payment system</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="bullet-list">
+          <li style="animation-delay:.5s">Email/Password + Google OAuth dual authentication</li>
+          <li style="animation-delay:.55s">JWT HttpOnly cookies for secure session management</li>
+          <li style="animation-delay:.6s">Bcrypt password hashing for stored credentials</li>
+          <li style="animation-delay:.65s">Protected routes — all pages redirect to login if not authenticated</li>
+          <li style="animation-delay:.7s">Admin panel with product, order and job application management</li>
+          <li style="animation-delay:.75s">Real-time analytics aggregated via MongoDB pipeline</li>
+          <li style="animation-delay:.8s">Job application form with backend persistence and email</li>
+          <li style="animation-delay:.85s">Career portal with role-based job category selection</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 18. API SUMMARY ── -->
+  <div class="slide s-content" id="s18">
+    <div class="slide-chip">API</div>
+    <div class="slide-header">
+      <div class="slide-label">Backend Routes</div>
+      <div class="slide-title">API Summary</div>
+      <div class="slide-divider"></div>
+    </div>
+    <div class="grid-2">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card card-blue" style="padding:14px 18px;">
+          <div style="font-size:11px;color:var(--blue);font-weight:700;letter-spacing:1px;margin-bottom:8px;">AUTHENTICATION</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2;">POST /api/auth/login<br>POST /api/auth/register<br>POST /api/auth/logout</div>
+        </div>
+        <div class="card card-accent" style="padding:14px 18px;">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:8px;">PRODUCTS & CART</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2;">GET /api/product/list<br>POST /api/product/add<br>POST /api/cart/add<br>GET /api/cart/get</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card card-green" style="padding:14px 18px;">
+          <div style="font-size:11px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px;">ORDERS</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2;">POST /api/order/place<br>GET /api/order/userorders<br>POST /api/order/status<br>GET /api/order/list</div>
+        </div>
+        <div class="card card-purple" style="padding:14px 18px;">
+          <div style="font-size:11px;color:var(--purple);font-weight:700;letter-spacing:1px;margin-bottom:8px;">AI & JOBS & ANALYTICS</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2;">POST /api/stylist/ask<br>POST /api/job/apply<br>GET /api/job/list<br>GET /api/admin/analytics</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 19. THANK YOU ── -->
+  <div class="slide s-end" id="s19">
+    <div class="end-ring">👗</div>
+    <h2 class="end-title">Thank You</h2>
+    <p class="end-sub">TRENDIFY — E-COMMERCE PLATFORM</p>
+    <div class="end-grid">
+      <div class="end-card"><div class="end-card-icon">⚛️</div><div class="end-card-label">FRONTEND</div><div class="end-card-val">React + Vite</div></div>
+      <div class="end-card"><div class="end-card-icon">🟢</div><div class="end-card-label">BACKEND</div><div class="end-card-val">Node + Express</div></div>
+      <div class="end-card"><div class="end-card-icon">🍃</div><div class="end-card-label">DATABASE</div><div class="end-card-val">MongoDB Atlas</div></div>
+      <div class="end-card"><div class="end-card-icon">🤖</div><div class="end-card-label">AI ENGINE</div><div class="end-card-val">Gemini 2.0 Flash</div></div>
+      <div class="end-card"><div class="end-card-icon">💳</div><div class="end-card-label">PAYMENTS</div><div class="end-card-val">Razorpay SDK</div></div>
+      <div class="end-card"><div class="end-card-icon">☁️</div><div class="end-card-label">IMAGES</div><div class="end-card-val">Cloudinary CDN</div></div>
+    </div>
+  </div>
+
+</div><!-- end ppt -->
+
+<!-- ── Navigation UI ── -->
+<nav>
+  <button class="nav-btn" onclick="prevSlide()">&#8592;</button>
+  <div class="nav-dots" id="dots"></div>
+  <div id="slideCounter">1 / 19</div>
+  <button class="nav-btn" onclick="nextSlide()">&#8594;</button>
+</nav>
+
+<script>
+  const TOTAL = 19;
+  let cur = 1;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for(let i=1;i<=TOTAL;i++){
+    const d = document.createElement('div');
+    d.className='dot'+(i===1?' active':'');
+    d.onclick=()=>goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n){
+    if(n<1||n>TOTAL)return;
+    const prev = document.getElementById('s'+cur);
+    prev.classList.remove('active'); prev.classList.add('leaving');
+    setTimeout(()=>prev.classList.remove('leaving'),600);
+
+    cur=n;
+    const slide = document.getElementById('s'+cur);
+    slide.classList.add('active');
+
+    // Re-trigger animations inside the slide
+    slide.querySelectorAll('.card,.flow-step,.tech-pill,.bullet-list li,.stat-box').forEach(el=>{
+      el.style.animation='none';
+      el.offsetHeight;
+      el.style.animation='';
+    });
+
+    document.getElementById('slideCounter').textContent=`${cur} / ${TOTAL}`;
+    document.getElementById('progress-line').style.width=((cur/TOTAL)*100)+'%';
+    document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i+1===cur));
+  }
+
+  function nextSlide(){goTo(cur+1);}
+  function prevSlide(){goTo(cur-1);}
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowDown') nextSlide();
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp') prevSlide();
+    if(e.key==='Home') goTo(1);
+    if(e.key==='End') goTo(TOTAL);
+  });
+
+  // Touch swipe
+  let tx=0;
+  document.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>50){dx<0?nextSlide():prevSlide();}
+  });
+</script>
+</body>
+</html>

@@ -6,30 +6,47 @@ import { BiSupport } from "react-icons/bi";
 
 function OurPolicy() {
   return (
-    <div className='w-[100vw] h-[100vh] md:h-[70vh] flex items-center justify-start flex-col  bg-gradient-to-l from-[#141414] to-[#0c2025] gap-[50px] '>
-        <div className='h-[8%] w-[100%] text-center mt-[70px] '>
-            <Title text1={"OUR"} text2={"POLICY"}/>
-            <p className='w-[100%] m-auto text-[13px] md:text-[20px] px-[10px] text-blue-100 '>Customer-Friendly Policies – Committed to Your Satisfaction and Safety.</p>
+    <div className='w-full bg-[#151113] py-24 px-8 md:px-16 flex flex-col items-center border-t border-[#ffffff0a]'>
+        
+        <div className='text-center mb-20'>
+            <h3 className='text-[#e09e86] text-[12px] font-bold tracking-[0.2em] uppercase mb-4'>Trust & Safety</h3>
+            <h2 className='text-[40px] md:text-[50px] font-serif text-white leading-tight'>
+                <span className='font-light italic text-[#e09e86]'>Our</span> Policy
+            </h2>
+            <p className='text-[#808080] text-[14px] max-w-[600px] mx-auto mt-4'>
+                Customer-Friendly Policies – Committed to Your Satisfaction and Safety.
+            </p>
         </div>
-      <div className='w-[100%] md:min-h-[50%] h-[20%] flex items-center justify-center flex-wrap lg:gap-[50px] gap-[80px]'>
-        <div className='w-[400px] max-w-[90%] h-[60%] flex items-center justify-center flex-col gap-[10px] '>
-        <RiExchangeFundsLine  className='md:w-[60px] w-[30px] h-[30px] md:h-[60px] text-[#90b9ff]'/>
-        <p className='font-semibold md:text-[25px] text-[19px] text-[#a5e8f7]'>Easy Exchange Policy</p>
-        <p className='font-semibold md:text-[18px] text-[12px] text-[aliceblue] text-center'>Exchange Made Easy – Quick, Simple, and Customer-Friendly Process.</p>
 
+      <div className='w-full max-w-[1200px] flex flex-wrap justify-center gap-10 md:gap-16'>
+        
+        {/* Policy 1 */}
+        <div className='flex-1 min-w-[280px] max-w-[350px] p-8 rounded-2xl bg-[#ffffff05] border border-[#ffffff10] flex flex-col items-center text-center group hover:bg-[#ffffff0a] transition-colors'>
+            <div className='w-16 h-16 rounded-full bg-[#e09e8615] flex items-center justify-center mb-6 text-[#e09e86] group-hover:scale-110 transition-transform'>
+                <RiExchangeFundsLine size={30}/>
+            </div>
+            <h4 className='text-white text-[18px] font-serif mb-3'>Easy Exchange</h4>
+            <p className='text-[#808080] text-[14px] leading-relaxed'>Exchange Made Easy – Quick, Simple, and Customer-Friendly Process.</p>
         </div>
-        <div className='w-[400px] max-w-[90%] h-[60%] flex items-center justify-center flex-col gap-[10px] '>
-        <TbRosetteDiscountCheckFilled  className='md:w-[60px] w-[30px] h-[30px] md:h-[60px] text-[#90b9ff]'/>
-        <p className='font-semibold md:text-[25px] text-[19px] text-[#a5e8f7]'>7 Days Return Policy</p>
-        <p className='font-semibold md:text-[18px] text-[12px] text-[aliceblue] text-center'>Shop with Confidence – 7 Days Easy Return Guarantee.</p>
 
+        {/* Policy 2 */}
+        <div className='flex-1 min-w-[280px] max-w-[350px] p-8 rounded-2xl bg-[#ffffff05] border border-[#ffffff10] flex flex-col items-center text-center group hover:bg-[#ffffff0a] transition-colors'>
+            <div className='w-16 h-16 rounded-full bg-[#e09e8615] flex items-center justify-center mb-6 text-[#e09e86] group-hover:scale-110 transition-transform'>
+                <TbRosetteDiscountCheckFilled size={30}/>
+            </div>
+            <h4 className='text-white text-[18px] font-serif mb-3'>7 Days Return</h4>
+            <p className='text-[#808080] text-[14px] leading-relaxed'>Shop with Confidence – 7 Days Easy Return Guarantee.</p>
         </div>
-        <div className='w-[400px] max-w-[90%] h-[60%] flex items-center justify-center flex-col gap-[10px] '>
-        <BiSupport  className='md:w-[60px] w-[30px] h-[30px] md:h-[60px] text-[#90b9ff]'/>
-        <p className='font-semibold md:text-[25px] text-[19px] text-[#a5e8f7]'>Best Customer Support</p>
-        <p className='font-semibold md:text-[18px] text-[12px] text-[aliceblue] text-center'>Trusted Customer Support – Your Satisfaction Is Our Priority.</p>
 
+        {/* Policy 3 */}
+        <div className='flex-1 min-w-[280px] max-w-[350px] p-8 rounded-2xl bg-[#ffffff05] border border-[#ffffff10] flex flex-col items-center text-center group hover:bg-[#ffffff0a] transition-colors'>
+            <div className='w-16 h-16 rounded-full bg-[#e09e8615] flex items-center justify-center mb-6 text-[#e09e86] group-hover:scale-110 transition-transform'>
+                <BiSupport size={30}/>
+            </div>
+            <h4 className='text-white text-[18px] font-serif mb-3'>24/7 Support</h4>
+            <p className='text-[#808080] text-[14px] leading-relaxed'>Trusted Customer Support – Your Satisfaction Is Our Priority.</p>
         </div>
+
       </div>
     </div>
   )

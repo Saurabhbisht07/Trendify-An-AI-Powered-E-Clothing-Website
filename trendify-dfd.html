@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trendify – DFD System Simulation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0b0e; --surface: #1a1517; --border: #ffffff18;
+      --accent: #e09e86; --accent2: #d97d66;
+      --blue: #4fc3f7; --green: #81c784; --purple: #ce93d8; --yellow: #fff176;
+      --text: #e0e0e0; --muted: #888;
+    }
+    body { background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    header {
+      background: linear-gradient(135deg, #1a1517, #251d20);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 40px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100; backdrop-filter: blur(20px);
+    }
+    header h1 { font-size: 22px; font-weight: 800; letter-spacing: 3px; color: var(--accent); }
+    header span { font-size: 12px; color: var(--muted); letter-spacing: 2px; }
+
+    .tabs { display: flex; gap: 8px; padding: 24px 40px 0; flex-wrap: wrap; }
+    .tab {
+      padding: 10px 22px; border-radius: 100px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .3s; letter-spacing: .5px;
+    }
+    .tab:hover { border-color: var(--accent); color: var(--accent); }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+    .legend { display: flex; gap: 24px; padding: 20px 40px 0; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+    .legend-dot { width: 28px; height: 14px; border-radius: 3px; }
+
+    .sim-bar { display: flex; align-items: center; gap: 14px; padding: 20px 40px; flex-wrap: wrap; }
+    .sim-btn {
+      padding: 10px 28px; border-radius: 100px; border: none;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #000; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity .2s, transform .2s;
+    }
+    .sim-btn:hover { opacity: .85; transform: scale(1.04); }
+    .sim-btn.outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .sim-btn.outline:hover { border-color: var(--accent); color: var(--accent); }
+    .sim-status { font-size: 12px; color: var(--muted); flex: 1; min-width: 200px; line-height: 1.7; }
+    .sim-status span { color: var(--accent); font-weight: 700; }
+    .sim-step-info { font-size: 11px; color: var(--muted); background: #ffffff08; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+
+    .canvas-wrapper { padding: 0 40px 32px; }
+    .canvas-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+    .canvas {
+      position: relative; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 24px; overflow: hidden; min-height: 560px;
+    }
+
+    .node {
+      position: absolute; border-radius: 14px; padding: 12px 16px;
+      font-size: 12px; font-weight: 600; text-align: center; letter-spacing: .4px;
+      transition: transform .25s, box-shadow .25s, border-color .25s; cursor: default; min-width: 110px; line-height: 1.5;
+    }
+    .entity  { background: #192130; border: 2px solid var(--blue);   color: var(--blue);   box-shadow: 0 0 12px #4fc3f730; }
+    .process { background: #211520; border: 2px solid var(--accent);  color: var(--accent); box-shadow: 0 0 12px #e09e8630; border-radius: 50px; }
+    .store   { background: #172017; border: 2px solid var(--green);   color: var(--green);  box-shadow: 0 0 12px #81c78430; border-top: 2px solid var(--green); border-bottom: 2px solid var(--green); border-left: none; border-right: none; border-radius: 4px; }
+    .decision{ background: #211f15; border: 2px solid var(--yellow);  color: var(--yellow); box-shadow: 0 0 12px #fff17630; }
+    .service { background: #1f1520; border: 2px solid var(--purple);  color: var(--purple); box-shadow: 0 0 12px #ce93d830; }
+
+    /* active animation */
+    .node.sim-active {
+      transform: scale(1.12) !important;
+      z-index: 20;
+      animation: nodePulse 0.6s ease-out;
+    }
+    @keyframes nodePulse {
+      0%   { transform: scale(1);    filter: brightness(1); }
+      50%  { transform: scale(1.15); filter: brightness(2); }
+      100% { transform: scale(1.12); filter: brightness(1.4); }
+    }
+    .node.sim-done { opacity: .55; }
+
+    svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+
+    /* base arrow */
+    .arrow-base {
+      fill: none; stroke-width: 1.5; stroke: #ffffff15;
+    }
+    /* animated active arrow */
+    .arrow-active {
+      fill: none; stroke-width: 3;
+      stroke-dasharray: 10 5;
+      animation: flowDash 0.5s linear infinite;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+    @keyframes flowDash { to { stroke-dashoffset: -30; } }
+
+    /* moving dot along path */
+    .flow-dot { r: 6; filter: drop-shadow(0 0 8px currentColor); animation: dotAppear .2s ease-out; }
+    @keyframes dotAppear { from { r: 0; opacity: 0; } to { opacity: 1; } }
+
+    .arrow-label { font-size: 10px; font-weight: 600; fill: #ffffff55; }
+    .arrow-label-active { font-size: 10px; font-weight: 700; }
+
+    /* step progress bar */
+    .progress-bar { height: 3px; background: var(--accent); border-radius: 0 0 24px 24px; transition: width .5s ease; position: absolute; bottom: 0; left: 0; }
+
+    .steps-panel { padding: 0 40px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .step-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px; transition: all .3s; cursor: pointer; position: relative; overflow: hidden;
+    }
+    .step-card::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 3px 0 0 3px; transform: scaleY(0); transition: transform .3s; transform-origin: top; }
+    .step-card.active::after, .step-card:hover::after { transform: scaleY(1); }
+    .step-card.active { border-color: var(--accent); background: #231b1f; }
+    .step-num { font-size: 10px; color: var(--accent); font-weight: 800; letter-spacing: 2px; margin-bottom: 6px; }
+    .step-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .step-desc { font-size: 12px; color: var(--muted); line-height: 1.65; }
+    .step-badge { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+    .badge-api  { background: #e09e8620; color: var(--accent); }
+    .badge-db   { background: #81c78420; color: var(--green); }
+    .badge-auth { background: #4fc3f720; color: var(--blue); }
+    .badge-ai   { background: #ce93d820; color: var(--purple); }
+    .badge-gate { background: #fff17620; color: var(--yellow); }
+
+    .diagram { display: none; }
+    .diagram.active { display: block; }
+
+    @media (max-width: 600px) {
+      header, .tabs, .canvas-wrapper, .steps-panel, .legend, .sim-bar { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>TRENDIFY</h1>
+  <span>DATA FLOW DIAGRAM — SYSTEM SIMULATION</span>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchDiagram('context',this)">Level 0 – Context</button>
+  <button class="tab" onclick="switchDiagram('auth',this)">Login & Auth Flow</button>
+  <button class="tab" onclick="switchDiagram('shopping',this)">Shopping Flow</button>
+  <button class="tab" onclick="switchDiagram('order',this)">Order & Payment</button>
+  <button class="tab" onclick="switchDiagram('admin',this)">Admin Panel</button>
+  <button class="tab" onclick="switchDiagram('ai',this)">AI Stylist Flow</button>
+</div>
+
+<div class="legend" style="margin-top:20px;">
+  <div class="legend-item"><div class="legend-dot" style="background:#192130;border:2px solid #4fc3f7;"></div>External Entity</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#211520;border:2px solid var(--accent);border-radius:20px;"></div>Process</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#172017;border-top:2px solid var(--green);border-bottom:2px solid var(--green);"></div>Data Store (DB)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#211f15;border:2px solid #fff176;"></div>Decision</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1f1520;border:2px solid var(--purple);"></div>External Service</div>
+</div>
+
+<div class="sim-bar">
+  <button class="sim-btn" onclick="runSimulation()">▶ Run Flow</button>
+  <button class="sim-btn outline" onclick="resetSim()">↺ Reset</button>
+  <div class="sim-status" id="simStatus">Click <span>Run Flow</span> to watch the data travel step by step through the system.</div>
+</div>
+
+<!-- ═════════════ CONTEXT ═════════════ -->
+<div id="diagram-context" class="diagram active">
+  <div class="canvas-wrapper">
+    <div class="canvas-title">LEVEL 0 — CONTEXT DIAGRAM</div>
+    <div class="canvas" id="c-context" style="height:580px;">
+      <svg class="arrows" id="svg-context"></svg>
+      <div id="pb-context" class="progress-bar" style="width:0%"></div>
+      <div class="node entity"  id="ctx-user"  style="left:28px;top:250px;width:110px;">👤 Customer</div>
+      <div class="node entity"  id="ctx-admin" style="right:28px;top:80px;width:120px;">🛡️ Admin</div>
+      <div class="node entity"  id="ctx-ext"   style="right:28px;top:390px;width:120px;">💳 Razorpay<br>/ Google</div>
+      <div class="node process" id="ctx-sys"   style="left:50%;top:50%;transform:translate(-50%,-50%);width:160px;font-size:14px;padding:22px;">⚡ TRENDIFY<br>SYSTEM</div>
+      <div class="node store"   id="ctx-db"    style="left:50%;bottom:28px;transform:translateX(-50%);width:175px;">🗄️ MongoDB Atlas</div>
+      <div class="node service" id="ctx-cdn"   style="left:50%;top:28px;transform:translateX(-50%);width:155px;">☁️ Cloudinary CDN</div>
+    </div>
+  </div>
+  <div class="steps-panel">
+    <div class="step-card"><div class="step-num">STEP 01</div><div class="step-title">Customer Sends Request</div><div class="step-desc">Login, browse, cart and order requests flow from Customer into the Trendify System via REST API.</div><span class="step-badge badge-api">REST API</span></div>
+    <div class="step-card"><div class="step-num">STEP 02</div><div class="step-title">System Reads/Writes DB</div><div class="step-desc">All business data — users, products, orders, jobs — are stored and fetched from MongoDB Atlas.</div><span class="step-badge badge-db">MongoDB</span></div>
+    <div class="step-card"><div class="step-num">STEP 03</div><div class="step-title">Images via Cloudinary</div><div class="step-desc">Product images uploaded by Admin are hosted on Cloudinary CDN. URLs are stored in MongoDB.</div><span class="step-badge badge-api">CDN</span></div>
+    <div class="step-card"><div class="step-num">STEP 04</div><div class="step-title">External Payments & Auth</div><div class="step-desc">Razorpay handles online payments. Google handles OAuth login. Both are external service integrations.</div><span class="step-badge badge-auth">OAuth / Razorpay</span></div>
+    <div class="step-card"><div class="step-num">STEP 05</div><div class="step-title">Admin Controls System</div><div class="step-desc">Admin sends commands to manage products, orders, analytics and job applications via the Admin Panel.</div><span class="step-badge badge-gate">Admin JWT</span></div>
+    <div class="step-card"><div class="step-num">STEP 06</div><div class="step-title">Response Returned</div><div class="step-desc">Processed data — product lists, order confirmations, AI answers — flows back to the Customer.</div><span class="step-badge badge-api">JSON Response</span></div>
+  </div>
+</div>
+
+<!-- ═════════════ AUTH ═════════════ -->
+<div id="diagram-auth" class="diagram">
+  <div class="canvas-wrapper">
+    <div class="canvas-title">LEVEL 1 — LOGIN & AUTHENTICATION FLOW</div>
+    <div class="canvas" id="c-auth" style="height:600px;">
+      <svg class="arrows" id="svg-auth"></svg>
+      <div id="pb-auth" class="progress-bar" style="width:0%"></div>
+      <div class="node entity"   id="au-user" style="left:20px;top:270px;">👤 User</div>
+      <div class="node process"  id="au-p1"   style="left:210px;top:80px;width:145px;">1.1 Enter<br>Credentials</div>
+      <div class="node process"  id="au-p2"   style="left:210px;top:270px;width:145px;">1.2 Google<br>OAuth</div>
+      <div class="node store"    id="au-db"   style="left:210px;top:450px;width:155px;">🗄️ Users Collection</div>
+      <div class="node service"  id="au-goog" style="left:420px;top:450px;width:155px;">🔵 Google Auth API</div>
+      <div class="node decision" id="au-d1"   style="left:430px;top:160px;width:148px;">Valid?</div>
+      <div class="node process"  id="au-jwt"  style="left:650px;top:80px;width:148px;">1.3 Issue<br>JWT Token</div>
+      <div class="node process"  id="au-err"  style="left:650px;top:270px;width:148px;">1.4 Return<br>Error 401</div>
+      <div class="node entity"   id="au-home" style="right:20px;top:80px;width:130px;">🏠 Home Page<br>(Logged In)</div>
+    </div>
+  </div>
+  <div class="steps-panel">
+    <div class="step-card"><div class="step-num">STEP 01</div><div class="step-title">User Submits Login</div><div class="step-desc">User types email + password on Login page. React sends POST request to /api/auth/login.</div><span class="step-badge badge-api">POST /api/auth/login</span></div>
+    <div class="step-card"><div class="step-num">STEP 02</div><div class="step-title">DB Lookup</div><div class="step-desc">Backend queries MongoDB Users Collection to find the matching email address.</div><span class="step-badge badge-db">MongoDB Find</span></div>
+    <div class="step-card"><div class="step-num">STEP 03</div><div class="step-title">Password Check</div><div class="step-desc">bcryptjs compares submitted password against the stored hash. Goes to decision gateway.</div><span class="step-badge badge-auth">bcryptjs</span></div>
+    <div class="step-card"><div class="step-num">STEP 04</div><div class="step-title">Valid → JWT Issued</div><div class="step-desc">On success, server signs a JWT and sets it as an HttpOnly cookie. User redirected to Home.</div><span class="step-badge badge-auth">jsonwebtoken</span></div>
+    <div class="step-card"><div class="step-num">STEP 05</div><div class="step-title">Google OAuth Path</div><div class="step-desc">Google sign-in fires Firebase, which returns an ID token. Backend verifies with Google Auth API.</div><span class="step-badge badge-ai">Firebase / OAuth2</span></div>
+  </div>
+</div>
+
+<!-- ═════════════ SHOPPING ═════════════ -->
+<div id="diagram-shopping" class="diagram">
+  <div class="canvas-wrapper">
+    <div class="canvas-title">LEVEL 1 — PRODUCT BROWSING & CART FLOW</div>
+    <div class="canvas" id="c-shopping" style="height:600px;">
+      <svg class="arrows" id="svg-shopping"></svg>
+      <div id="pb-shopping" class="progress-bar" style="width:0%"></div>
+      <div class="node entity"   id="sh-user" style="left:20px;top:270px;">👤 Customer</div>
+      <div class="node process"  id="sh-p1"   style="left:190px;top:80px;width:145px;">2.1 Browse<br>Collections</div>
+      <div class="node process"  id="sh-p2"   style="left:190px;top:260px;width:145px;">2.2 Filter &<br>Search</div>
+      <div class="node process"  id="sh-p3"   style="left:190px;top:440px;width:145px;">2.3 Product<br>Detail</div>
+      <div class="node store"    id="sh-db"   style="left:420px;top:60px;width:155px;">🗄️ Products DB</div>
+      <div class="node service"  id="sh-cdn"  style="left:420px;top:240px;width:155px;">☁️ Cloudinary<br>Images</div>
+      <div class="node process"  id="sh-ai"   style="left:420px;top:420px;width:155px;">2.4 AI Size<br>Recommender</div>
+      <div class="node process"  id="sh-cart" style="left:660px;top:330px;width:145px;">2.5 Add to<br>Cart</div>
+      <div class="node store"    id="sh-cdb"  style="left:660px;top:480px;width:145px;">🗄️ Cart Collection</div>
+    </div>
+  </div>
+  <div class="steps-panel">
+    <div class="step-card"><div class="step-num">STEP 01</div><div class="step-title">Fetch All Products</div><div class="step-desc">Collections page calls GET /api/product/list. Backend queries MongoDB and returns full product catalog.</div><span class="step-badge badge-db">GET /api/product/list</span></div>
+    <div class="step-card"><div class="step-num">STEP 02</div><div class="step-title">Filter & Search</div><div class="step-desc">User applies category/subCategory filters or types in search box. All filtering is done client-side in React state.</div><span class="step-badge badge-api">React State</span></div>
+    <div class="step-card"><div class="step-num">STEP 03</div><div class="step-title">Load Product Images</div><div class="step-desc">Product images are fetched from Cloudinary CDN using URLs stored in MongoDB. Multi-image gallery displayed.</div><span class="step-badge badge-api">Cloudinary CDN</span></div>
+    <div class="step-card"><div class="step-num">STEP 04</div><div class="step-title">AI Size Recommender</div><div class="step-desc">User inputs height & weight. A BMI-based decision tree recommends S, M, L or XL with 94% confidence match.</div><span class="step-badge badge-ai">ML Algorithm</span></div>
+    <div class="step-card"><div class="step-num">STEP 05</div><div class="step-title">Add to Cart</div><div class="step-desc">POST /api/cart/add saves the productId + size to the Cart Collection linked to the user's document in MongoDB.</div><span class="step-badge badge-db">POST /api/cart/add</span></div>
+  </div>
+</div>
+
+<!-- ═════════════ ORDER ═════════════ -->
+<div id="diagram-order" class="diagram">
+  <div class="canvas-wrapper">
+    <div class="canvas-title">LEVEL 1 — ORDER PLACEMENT & PAYMENT FLOW</div>
+    <div class="canvas" id="c-order" style="height:620px;">
+      <svg class="arrows" id="svg-order"></svg>
+      <div id="pb-order" class="progress-bar" style="width:0%"></div>
+      <div class="node entity"   id="or-user"  style="left:20px;top:290px;">👤 Customer</div>
+      <div class="node process"  id="or-cart"  style="left:185px;top:80px;width:140px;">3.1 View Cart</div>
+      <div class="node process"  id="or-addr"  style="left:185px;top:270px;width:140px;">3.2 Enter<br>Address</div>
+      <div class="node decision" id="or-gate"  style="left:400px;top:175px;width:145px;">Payment<br>Method?</div>
+      <div class="node service"  id="or-pay"   style="left:610px;top:70px;width:155px;">💳 Razorpay<br>Gateway</div>
+      <div class="node process"  id="or-cod"   style="left:610px;top:260px;width:155px;">3.4 Cash on<br>Delivery</div>
+      <div class="node process"  id="or-create"style="left:400px;top:420px;width:150px;">3.5 Create<br>Order Record</div>
+      <div class="node store"    id="or-odb"   style="left:185px;top:480px;width:145px;">🗄️ Orders DB</div>
+      <div class="node store"    id="or-cclr"  style="left:610px;top:450px;width:155px;">🗄️ Cart Cleared</div>
+      <div class="node entity"   id="or-conf"  style="right:20px;top:420px;width:130px;">✅ Order<br>Confirmed</div>
+    </div>
+  </div>
+  <div class="steps-panel">
+    <div class="step-card"><div class="step-num">STEP 01</div><div class="step-title">View Cart</div><div class="step-desc">GET /api/cart/get fetches the user's cart items from MongoDB. React displays items with total price.</div><span class="step-badge badge-db">GET /api/cart/get</span></div>
+    <div class="step-card"><div class="step-num">STEP 02</div><div class="step-title">Enter Shipping Details</div><div class="step-desc">User fills name, address, city, pin and phone. This gets bundled with the order payload.</div><span class="step-badge badge-api">Form Data</span></div>
+    <div class="step-card"><div class="step-num">STEP 03</div><div class="step-title">Payment Decision</div><div class="step-desc">User selects Online or COD. This is the decision gateway — each path leads to a different process.</div><span class="step-badge badge-gate">Gateway</span></div>
+    <div class="step-card"><div class="step-num">STEP 04</div><div class="step-title">Razorpay Checkout</div><div class="step-desc">Backend calls Razorpay to create an order ID. Frontend opens the Razorpay modal. On success → order created.</div><span class="step-badge badge-api">Razorpay SDK</span></div>
+    <div class="step-card"><div class="step-num">STEP 05</div><div class="step-title">Order Saved & Cart Cleared</div><div class="step-desc">POST /api/order/place writes to Orders Collection and deletes cart items. User sees Order Confirmed screen.</div><span class="step-badge badge-db">POST /api/order/place</span></div>
+  </div>
+</div>
+
+<!-- ═════════════ ADMIN ═════════════ -->
+<div id="diagram-admin" class="diagram">
+  <div class="canvas-wrapper">
+    <div class="canvas-title">LEVEL 1 — ADMIN PANEL FLOW</div>
+    <div class="canvas" id="c-admin" style="height:620px;">
+      <svg class="arrows" id="svg-admin"></svg>
+      <div id="pb-admin" class="progress-bar" style="width:0%"></div>
+      <div class="node entity"   id="ad-user"  style="left:20px;top:290px;">🛡️ Admin</div>
+      <div class="node process"  id="ad-login" style="left:190px;top:80px;width:145px;">4.1 Admin<br>Login</div>
+      <div class="node process"  id="ad-prod"  style="left:190px;top:260px;width:145px;">4.2 Manage<br>Products</div>
+      <div class="node process"  id="ad-ord"   style="left:190px;top:430px;width:145px;">4.3 Manage<br>Orders</div>
+      <div class="node process"  id="ad-ana"   style="left:430px;top:80px;width:150px;">4.4 Analytics<br>Dashboard</div>
+      <div class="node service"  id="ad-cdn"   style="left:430px;top:270px;width:150px;">☁️ Cloudinary<br>Upload</div>
+      <div class="node process"  id="ad-jobs"  style="left:430px;top:440px;width:150px;">4.5 Job<br>Applications</div>
+      <div class="node store"    id="ad-pdb"   style="left:660px;top:100px;width:155px;">🗄️ Products/<br>Orders DB</div>
+      <div class="node store"    id="ad-jdb"   style="left:660px;top:430px;width:155px;">🗄️ Jobs<br>Collection</div>
+    </div>
+  </div>
+  <div class="steps-panel">
+    <div class="step-card"><div class="step-num">STEP 01</div><div class="step-title">Admin Login</div><div class="step-desc">Admin logs in with ADMIN_EMAIL & ADMIN_PASSWORD from .env. Server issues a special scoped Admin JWT token.</div><span class="step-badge badge-gate">Admin JWT</span></div>
+    <div class="step-card"><div class="step-num">STEP 02</div><div class="step-title">Add Products</div><div class="step-desc">Admin uploads product with images. Multer handles file parsing → images uploaded to Cloudinary → URL saved in MongoDB.</div><span class="step-badge badge-api">Multer + Cloudinary</span></div>
+    <div class="step-card"><div class="step-num">STEP 03</div><div class="step-title">Analytics Dashboard</div><div class="step-desc">GET /api/admin/analytics aggregates total revenue, total orders, and total users via MongoDB $sum pipeline.</div><span class="step-badge badge-db">MongoDB Aggregate</span></div>
+    <div class="step-card"><div class="step-num">STEP 04</div><div class="step-title">Order Management</div><div class="step-desc">Admin views all orders and updates status (Pending → Shipped → Delivered) via POST /api/order/status.</div><span class="step-badge badge-db">Order Status API</span></div>
+    <div class="step-card"><div class="step-num">STEP 05</div><div class="step-title">Job Applications</div><div class="step-desc">Admin reviews career applications submitted via Contact page and updates their status: Pending / Accepted / Rejected.</div><span class="step-badge badge-db">Jobs Collection</span></div>
+  </div>
+</div>
+
+<!-- ═════════════ AI ═════════════ -->
+<div id="diagram-ai" class="diagram">
+  <div class="canvas-wrapper">
+    <div class="canvas-title">LEVEL 1 — AI STYLIST & VOICE ASSISTANT FLOW</div>
+    <div class="canvas" id="c-ai" style="height:620px;">
+      <svg class="arrows" id="svg-ai"></svg>
+      <div id="pb-ai" class="progress-bar" style="width:0%"></div>
+      <div class="node entity"   id="ai-user"  style="left:20px;top:270px;">👤 User</div>
+      <div class="node process"  id="ai-voice" style="left:190px;top:80px;width:148px;">5.1 Voice<br>Command</div>
+      <div class="node process"  id="ai-chat"  style="left:190px;top:270px;width:148px;">5.2 Type<br>Question</div>
+      <div class="node service"  id="ai-speech"style="left:420px;top:60px;width:150px;">🎙️ Web Speech<br>API (Browser)</div>
+      <div class="node process"  id="ai-nav"   style="left:420px;top:220px;width:150px;">5.3 Navigate<br>/ Search App</div>
+      <div class="node process"  id="ai-back"  style="left:420px;top:400px;width:150px;">5.4 Backend<br>/api/stylist/ask</div>
+      <div class="node decision" id="ai-gate"  style="left:650px;top:310px;width:148px;">Gemini<br>Available?</div>
+      <div class="node service"  id="ai-gem"   style="left:870px;top:200px;width:148px;">🤖 Gemini<br>2.0 Flash</div>
+      <div class="node process"  id="ai-rule"  style="left:870px;top:420px;width:148px;">⚡ Rule-Based<br>Engine</div>
+      <div class="node entity"   id="ai-resp"  style="left:650px;top:510px;width:145px;">💬 Answer<br>Shown in Chat</div>
+    </div>
+  </div>
+  <div class="steps-panel">
+    <div class="step-card"><div class="step-num">STEP 01</div><div class="step-title">Voice Recognition</div><div class="step-desc">User taps the Voice AI button. Browser's Web Speech API starts recording and converts speech to text transcript.</div><span class="step-badge badge-ai">Web Speech API</span></div>
+    <div class="step-card"><div class="step-num">STEP 02</div><div class="step-title">Intent & Navigation</div><div class="step-desc">Transcript is parsed for intent keywords (home, cart, search, about...). Matching commands navigate the app instantly.</div><span class="step-badge badge-api">Keyword NLP</span></div>
+    <div class="step-card"><div class="step-num">STEP 03</div><div class="step-title">AI Chat Question</div><div class="step-desc">User types a fashion question in the Stylist chat. React sends POST /api/stylist/ask to Express backend.</div><span class="step-badge badge-api">POST /api/stylist/ask</span></div>
+    <div class="step-card"><div class="step-num">STEP 04</div><div class="step-title">Gemini AI Response</div><div class="step-desc">If API quota available — Gemini 2.0 Flash generates a personalized, contextual fashion recommendation.</div><span class="step-badge badge-ai">Gemini 2.0 Flash</span></div>
+    <div class="step-card"><div class="step-num">STEP 05</div><div class="step-title">Smart Fallback</div><div class="step-desc">If Gemini is rate-limited (429), the in-built rule engine matches keywords and returns curated fashion advice instantly.</div><span class="step-badge badge-api">Rule Engine</span></div>
+  </div>
+</div>
+
+
+<script>
+/* ─── Arrow & flow definitions ─── */
+const FLOWS = {
+  context: [
+    { from: 'ctx-user',  to: 'ctx-sys',   label: 'Request',    color: '#4fc3f7' },
+    { from: 'ctx-sys',   to: 'ctx-db',    label: 'Read/Write', color: '#81c784' },
+    { from: 'ctx-db',    to: 'ctx-sys',   label: 'Data',       color: '#81c784' },
+    { from: 'ctx-sys',   to: 'ctx-cdn',   label: 'Images',     color: '#ce93d8' },
+    { from: 'ctx-ext',   to: 'ctx-sys',   label: 'Payment/Auth', color: '#ce93d8' },
+    { from: 'ctx-admin', to: 'ctx-sys',   label: 'Manage',     color: '#e09e86' },
+    { from: 'ctx-sys',   to: 'ctx-user',  label: 'Response',   color: '#e09e86' },
+  ],
+  auth: [
+    { from: 'au-user', to: 'au-p1',   label: 'Email+Pass',  color: '#4fc3f7' },
+    { from: 'au-p1',   to: 'au-db',   label: 'Lookup User', color: '#81c784' },
+    { from: 'au-db',   to: 'au-p1',   label: 'User Data',   color: '#81c784' },
+    { from: 'au-p1',   to: 'au-d1',   label: 'Validate',    color: '#e09e86' },
+    { from: 'au-d1',   to: 'au-jwt',  label: 'YES ✓',       color: '#81c784' },
+    { from: 'au-jwt',  to: 'au-home', label: 'Set Cookie',  color: '#81c784' },
+    { from: 'au-user', to: 'au-p2',   label: 'Google Sign-in', color: '#ce93d8' },
+    { from: 'au-p2',   to: 'au-goog', label: 'Verify Token', color: '#ce93d8' },
+    { from: 'au-goog', to: 'au-d1',   label: 'Profile',     color: '#ce93d8' },
+    { from: 'au-d1',   to: 'au-err',  label: 'NO ✗',        color: '#fff176' },
+  ],
+  shopping: [
+    { from: 'sh-user', to: 'sh-p1',   label: 'Browse',      color: '#4fc3f7' },
+    { from: 'sh-p1',   to: 'sh-db',   label: 'GET products', color: '#81c784' },
+    { from: 'sh-db',   to: 'sh-p1',   label: 'Product list', color: '#81c784' },
+    { from: 'sh-p1',   to: 'sh-cdn',  label: 'Load images',  color: '#ce93d8' },
+    { from: 'sh-user', to: 'sh-p2',   label: 'Filter/Search',color: '#e09e86' },
+    { from: 'sh-user', to: 'sh-p3',   label: 'Open product', color: '#4fc3f7' },
+    { from: 'sh-p3',   to: 'sh-ai',   label: 'Find My Size', color: '#ce93d8' },
+    { from: 'sh-p3',   to: 'sh-cart', label: 'Add to cart',  color: '#e09e86' },
+    { from: 'sh-cart', to: 'sh-cdb',  label: 'Save',         color: '#81c784' },
+  ],
+  order: [
+    { from: 'or-user',  to: 'or-cart',   label: 'View Cart',   color: '#4fc3f7' },
+    { from: 'or-user',  to: 'or-addr',   label: 'Fill Address',color: '#4fc3f7' },
+    { from: 'or-cart',  to: 'or-gate',   label: 'Checkout',    color: '#e09e86' },
+    { from: 'or-addr',  to: 'or-gate',   label: null,          color: '#e09e86' },
+    { from: 'or-gate',  to: 'or-pay',    label: 'Online Pay',  color: '#ce93d8' },
+    { from: 'or-gate',  to: 'or-cod',    label: 'COD',         color: '#81c784' },
+    { from: 'or-pay',   to: 'or-create', label: 'Verified',    color: '#ce93d8' },
+    { from: 'or-cod',   to: 'or-create', label: null,          color: '#81c784' },
+    { from: 'or-create',to: 'or-odb',    label: 'Save order',  color: '#81c784' },
+    { from: 'or-create',to: 'or-cclr',   label: 'Clear cart',  color: '#e09e86' },
+    { from: 'or-create',to: 'or-conf',   label: 'Confirm',     color: '#81c784' },
+  ],
+  admin: [
+    { from: 'ad-user',  to: 'ad-login', label: 'Credentials',  color: '#fff176' },
+    { from: 'ad-login', to: 'ad-pdb',   label: 'Admin JWT',    color: '#fff176' },
+    { from: 'ad-user',  to: 'ad-prod',  label: 'Add product',  color: '#e09e86' },
+    { from: 'ad-prod',  to: 'ad-cdn',   label: 'Upload image', color: '#ce93d8' },
+    { from: 'ad-cdn',   to: 'ad-pdb',   label: 'Store URL',    color: '#ce93d8' },
+    { from: 'ad-user',  to: 'ad-ord',   label: 'View orders',  color: '#4fc3f7' },
+    { from: 'ad-ord',   to: 'ad-pdb',   label: 'Update status',color: '#81c784' },
+    { from: 'ad-login', to: 'ad-ana',   label: 'Dashboard',    color: '#e09e86' },
+    { from: 'ad-ana',   to: 'ad-pdb',   label: 'Aggregate',    color: '#81c784' },
+    { from: 'ad-user',  to: 'ad-jobs',  label: 'Review jobs',  color: '#4fc3f7' },
+    { from: 'ad-jobs',  to: 'ad-jdb',   label: 'Update status',color: '#81c784' },
+  ],
+  ai: [
+    { from: 'ai-user',  to: 'ai-voice', label: 'Voice click',  color: '#4fc3f7' },
+    { from: 'ai-voice', to: 'ai-speech',label: 'Audio stream', color: '#4fc3f7' },
+    { from: 'ai-speech',to: 'ai-nav',   label: 'Transcript',   color: '#4fc3f7' },
+    { from: 'ai-nav',   to: 'ai-user',  label: 'Navigate',     color: '#81c784' },
+    { from: 'ai-user',  to: 'ai-chat',  label: 'Type question',color: '#ce93d8' },
+    { from: 'ai-chat',  to: 'ai-back',  label: 'POST /ask',    color: '#ce93d8' },
+    { from: 'ai-back',  to: 'ai-gate',  label: 'Check quota',  color: '#e09e86' },
+    { from: 'ai-gate',  to: 'ai-gem',   label: 'YES → API',    color: '#81c784' },
+    { from: 'ai-gate',  to: 'ai-rule',  label: 'NO → Fallback',color: '#fff176' },
+    { from: 'ai-gem',   to: 'ai-resp',  label: 'AI answer',    color: '#81c784' },
+    { from: 'ai-rule',  to: 'ai-resp',  label: 'Smart answer', color: '#fff176' },
+  ]
+};
+
+/* ─── Get center of a node ─── */
+function nc(id) {
+  const el = document.getElementById(id);
+  if (!el) return { x: 0, y: 0 };
+  const canvas = el.closest('.canvas');
+  const cr = canvas.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  return { x: er.left - cr.left + er.width / 2, y: er.top - cr.top + er.height / 2 };
+}
+
+/* ─── Draw all base (dim) arrows ─── */
+function drawBase(svgId, flows) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  // defs
+  svg.innerHTML = '';
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  ['#e09e86','#4fc3f7','#81c784','#ce93d8','#fff176'].forEach((c,i) => {
+    const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    const id = 'marr'+i;
+    m.setAttribute('id',id); m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','6');
+    m.setAttribute('refX','8'); m.setAttribute('refY','3'); m.setAttribute('orient','auto');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    p.setAttribute('points','0 0, 8 3, 0 6'); p.setAttribute('fill','#ffffff18');
+    m.appendChild(p); defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  flows.forEach((f, idx) => {
+    const A = nc(f.from), B = nc(f.to);
+    const cx = (A.x + B.x) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${A.x},${A.y} C${cx},${A.y} ${cx},${B.y} ${B.x},${B.y}`);
+    path.setAttribute('class','arrow-base');
+    path.setAttribute('stroke','#ffffff12');
+    path.setAttribute('marker-end','url(#marr0)');
+    path.setAttribute('data-idx', idx);
+    svg.appendChild(path);
+  });
+}
+
+/* ─── Animate a single arrow (highlighted) ─── */
+function animateArrow(svgId, flow, color) {
+  const svg = document.getElementById(svgId);
+  const A = nc(flow.from), B = nc(flow.to);
+  const cx = (A.x + B.x) / 2;
+  const d = `M${A.x},${A.y} C${cx},${A.y} ${cx},${B.y} ${B.x},${B.y}`;
+
+  // Remove previous active
+  svg.querySelectorAll('.arrow-active, .flow-dot, .active-label').forEach(e => e.remove());
+
+  // Glowing marker
+  const defs = svg.querySelector('defs');
+  const mId = 'marrActive';
+  let existingM = svg.querySelector('#'+mId);
+  if (existingM) existingM.remove();
+  const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  m.setAttribute('id', mId); m.setAttribute('markerWidth','10'); m.setAttribute('markerHeight','8');
+  m.setAttribute('refX','9'); m.setAttribute('refY','4'); m.setAttribute('orient','auto');
+  const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points','0 0, 10 4, 0 8'); poly.setAttribute('fill', color);
+  m.appendChild(poly); defs.appendChild(m);
+
+  // Active path
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d', d);
+  path.setAttribute('class','arrow-active');
+  path.setAttribute('stroke', color);
+  path.setAttribute('marker-end', 'url(#marrActive)');
+  svg.appendChild(path);
+
+  // Travelling dot
+  if (flow.label) {
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    const mx = (A.x*0.4 + B.x*0.6), my = ((A.y + B.y)/2) - 8;
+    txt.setAttribute('x', mx); txt.setAttribute('y', my);
+    txt.setAttribute('class','arrow-label-active');
+    txt.setAttribute('fill', color);
+    txt.setAttribute('text-anchor','middle');
+    txt.textContent = flow.label;
+    txt.classList.add('active-label');
+    svg.appendChild(txt);
+  }
+}
+
+/* ─── Main simulation ─── */
+let currentDiagram = 'context';
+let simInterval = null;
+let simStep = 0;
+
+function runSimulation() {
+  resetSim();
+  const flows = FLOWS[currentDiagram];
+  const steps = document.querySelectorAll('#diagram-'+currentDiagram+' .step-card');
+  const svgId = 'svg-' + currentDiagram;
+  const pbId  = 'pb-'  + currentDiagram;
+  const status = document.getElementById('simStatus');
+
+  // Dim all nodes
+  document.querySelectorAll('#diagram-'+currentDiagram+' .node').forEach(n => n.classList.add('sim-done'));
+
+  simStep = 0;
+  simInterval = setInterval(() => {
+    if (simStep >= flows.length) {
+      clearInterval(simInterval);
+      document.querySelectorAll('#diagram-'+currentDiagram+' .node').forEach(n => n.classList.remove('sim-done'));
+      document.getElementById(pbId).style.width = '100%';
+      status.innerHTML = `✅ Flow complete — <span>all ${flows.length} data transfers simulated</span>`;
+      return;
+    }
+
+    const f = flows[simStep];
+    const pct = Math.round(((simStep + 1) / flows.length) * 100);
+    document.getElementById(pbId).style.width = pct + '%';
+
+    // Un-dim and pulse the FROM node
+    const fromEl = document.getElementById(f.from);
+    const toEl   = document.getElementById(f.to);
+    if (fromEl) { fromEl.classList.remove('sim-done'); fromEl.classList.add('sim-active'); setTimeout(() => fromEl.classList.remove('sim-active'), 600); }
+    if (toEl)   { setTimeout(() => { toEl.classList.remove('sim-done'); toEl.classList.add('sim-active'); setTimeout(() => toEl.classList.remove('sim-active'), 600); }, 400); }
+
+    // Highlight arrow
+    animateArrow(svgId, f, f.color || '#e09e86');
+
+    // Update step card
+    steps.forEach(s => s.classList.remove('active'));
+    const cardIdx = Math.min(simStep, steps.length - 1);
+    if (steps[cardIdx]) {
+      steps[cardIdx].classList.add('active');
+      steps[cardIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    status.innerHTML = `▶ Step <span>${simStep + 1}/${flows.length}</span> — <span>${f.label || f.from + ' → ' + f.to}</span>  &nbsp; data flowing ${f.from.split('-').pop()} → ${f.to.split('-').pop()}`;
+    simStep++;
+  }, 4000);
+}
+
+function resetSim() {
+  clearInterval(simInterval); simStep = 0;
+  document.querySelectorAll('.node').forEach(n => { n.classList.remove('sim-active','sim-done'); });
+  document.querySelectorAll('.step-card').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.arrow-active, .flow-dot, .active-label').forEach(e => e.remove());
+  document.querySelectorAll('.progress-bar').forEach(p => p.style.width = '0%');
+  document.getElementById('simStatus').innerHTML = `Click <span>Run Flow</span> to watch the data travel step by step through the system.`;
+}
+
+function switchDiagram(id, btn) {
+  resetSim();
+  document.querySelectorAll('.diagram').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('diagram-'+id).classList.add('active');
+  btn.classList.add('active');
+  currentDiagram = id;
+  setTimeout(() => drawBase('svg-'+id, FLOWS[id]), 80);
+}
+
+/* Init */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    Object.keys(FLOWS).forEach(k => drawBase('svg-'+k, FLOWS[k]));
+  }, 120);
+});
+window.addEventListener('resize', () => {
+  Object.keys(FLOWS).forEach(k => drawBase('svg-'+k, FLOWS[k]));
+});
+</script>
+</body>
+</html>

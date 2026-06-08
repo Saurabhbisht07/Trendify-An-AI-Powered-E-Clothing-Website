@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import Title from '../component/Title'
 import { shopDataContext } from '../context/ShopContext'
-import { authDataContext } from '../context/authContext'
+import { authDataContext } from '../context/AuthContext'
 import axios from 'axios'
 
 function Order() {
@@ -11,71 +11,88 @@ function Order() {
 
     const loadOrderData = async () => {
        try {
-      const result = await axios.post(serverUrl + '/api/order/userorder',{},{withCredentials:true})
-      if(result.data){
-        let allOrdersItem = []
-        result.data.map((order)=>{
-          order.items.map((item)=>{
-            item['status'] = order.status
-            item['payment'] = order.payment
-            item['paymentMethod'] = order.paymentMethod
-            item['date'] = order.date
-            allOrdersItem.push(item)
-          })
-        })
-        setOrderData(allOrdersItem.reverse())
-      }
-    } catch (error) {
-      console.log(error)
-    }
+            const result = await axios.post(serverUrl + '/api/order/userorder',{},{withCredentials:true})
+            if(result.data){
+                let allOrdersItem = []
+                result.data.forEach((order)=>{
+                    order.items.forEach((item)=>{
+                        item['status'] = order.status
+                        item['payment'] = order.payment
+                        item['paymentMethod'] = order.paymentMethod
+                        item['date'] = order.date
+                        allOrdersItem.push(item)
+                    })
+                })
+                setOrderData(allOrdersItem.reverse())
+            }
+        } catch (error) {
+            console.log(error)
+        }
     }
 
-useEffect(()=>{
- loadOrderData()
-},[])
-
+    useEffect(()=>{
+        loadOrderData()
+    },[])
 
   return (
-    <div className='w-[99vw] min-h-[100vh] p-[20px] pb-[150px]  overflow-hidden bg-gradient-to-l from-[#141414] to-[#0c2025] '>
-      <div className='h-[8%] w-[100%] text-center mt-[80px]'>
-        <Title text1={'MY'} text2={'ORDER'} />
+    <div className='w-full min-h-screen bg-[#151113] pt-[120px] pb-24 font-sans'>
+      
+      <div className='mb-16'>
+        <Title text1={'MY'} text2={'ORDERS'} />
       </div>
-      <div className=' w-[100%] h-[92%] flex flex-wrap gap-[20px]'>
+
+      <div className='max-w-[1000px] mx-auto px-8 flex flex-col gap-6'>
         {
          orderData.map((item,index)=>(
-            <div key={index} className='w-[100%] h-[10%] border-t border-b '>
-                <div className='w-[100%] h-[80%] flex items-start gap-6 bg-[#51808048]  py-[10px] px-[20px] rounded-2xl relative '>
-                    <img src={item.image1} alt="" className='w-[130px] h-[130px] rounded-md '/>
-                    <div className='flex items-start justify-center flex-col gap-[5px]'>
-                    <p className='md:text-[25px] text-[20px] text-[#f3f9fc]'>{item.name}</p>
-                    <div className='flex items-center gap-[8px]   md:gap-[20px]'>
-                        <p className='md:text-[18px] text-[12px] text-[#aaf4e7]'>{currency} {item.price}</p>
-                      <p className='md:text-[18px] text-[12px] text-[#aaf4e7]'>Quantity: {item.quantity}</p>
-                      <p className='md:text-[18px] text-[12px] text-[#aaf4e7]'>Size: {item.size}</p>
-                    </div>
-                    <div className='flex items-center'>
-                     <p className='md:text-[18px] text-[12px] text-[#aaf4e7]'>Date: <span className='text-[#e4fbff] pl-[10px] md:text-[16px] text-[11px]'>{new Date(item.date).toDateString()}</span></p>
-                    </div>
-                    <div className='flex items-center'>
-                      <p className='md:text-[16px] text-[12px] text-[#aaf4e7]'>Payment Method :{item.paymentMethod}</p>
-                    </div>
-                    <div className='absolute md:left-[55%] md:top-[40%] right-[2%] top-[2%]  '>
-                        <div className='flex items-center gap-[5px]'>
-                      <p className='min-w-2 h-2 rounded-full bg-green-500'></p> 
-                      <p className='md:text-[17px] text-[10px] text-[#f3f9fc]'>{item.status}</p>
+            <div key={index} className='w-full p-6 bg-[#ffffff05] border border-[#ffffff10] rounded-2xl flex flex-col md:flex-row items-center md:items-start gap-6 relative group transition-colors hover:bg-[#ffffff0a]'>
+                
+                {/* Product Image */}
+                <div className='w-24 h-24 shrink-0 bg-[#ffffff05] rounded-xl flex items-center justify-center p-2 border border-[#ffffff0a]'>
+                    <img src={item.image1} alt={item.name} className='w-full h-full object-contain filter drop-shadow-lg'/>
+                </div>
 
+                {/* Details */}
+                <div className='flex-1 flex flex-col gap-3 w-full text-center md:text-left'>
+                    <h3 className='text-[18px] md:text-[22px] font-serif text-white'>{item.name}</h3>
+                    
+                    <div className='flex flex-wrap items-center justify-center md:justify-start gap-4 text-[14px] text-[#a0a0a0]'>
+                        <p className='text-[#e09e86] font-bold font-serif'>{currency} {item.price}</p>
+                        <span className='w-1 h-1 bg-[#ffffff40] rounded-full hidden md:block'></span>
+                        <p>Qty: <span className='text-white'>{item.quantity}</span></p>
+                        <span className='w-1 h-1 bg-[#ffffff40] rounded-full hidden md:block'></span>
+                        <p>Size: <span className='text-white'>{item.size}</span></p>
                     </div>
 
-                    </div>
-                     <div className='absolute md:right-[5%] right-[1%] md:top-[40%] top-[70%]'> 
-                    <button className='md:px-[15px] px-[5px] py-[3px] md:py-[7px] rounded-md bg-[#101919] text-[#f3f9fc] text-[12px] md:text-[16px] cursor-pointe active:bg-slate-500' onClick={loadOrderData} >Track Order</button>
-                  </div>
+                    <div className='text-[13px] text-[#808080] flex flex-col gap-1 mt-2'>
+                        <p>Ordered: <span className='text-[#a0a0a0]'>{new Date(item.date).toDateString()}</span></p>
+                        <p>Payment: <span className='text-[#a0a0a0] uppercase'>{item.paymentMethod}</span></p>
                     </div>
                 </div>
-               
+
+                {/* Status & Actions */}
+                <div className='flex flex-col items-center md:items-end justify-between w-full md:w-auto mt-4 md:mt-0 gap-4'>
+                    <div className='flex items-center gap-2 bg-[#ffffff05] px-4 py-2 rounded-full border border-[#ffffff10]'>
+                        <span className={`w-2 h-2 rounded-full ${item.status === 'Delivered' ? 'bg-green-500' : 'bg-[#e09e86] animate-pulse'}`}></span> 
+                        <p className='text-[13px] text-white font-medium'>{item.status}</p>
+                    </div>
+
+                    <button 
+                        className='px-6 py-3 rounded-lg border border-[#ffffff20] bg-transparent text-white text-[12px] font-bold tracking-[0.1em] uppercase hover:bg-white hover:text-black transition-all cursor-pointer' 
+                        onClick={loadOrderData} 
+                    >
+                        Track Order
+                    </button>
+                </div>
+
             </div>
          ))
         }
+
+        {orderData.length === 0 && (
+            <div className='text-center py-20 text-[#808080] text-[16px]'>
+                You haven't placed any orders yet.
+            </div>
+        )}
       </div>
     </div>
   )

@@ -16,6 +16,8 @@ import Order from './pages/Order'
 import { ToastContainer } from 'react-toastify';
 import NotFound from './pages/NotFound'
 import Ai from './component/Ai'
+import VirtualStylist from './component/VirtualStylist'
+
 function App() {
 let {userData} = useContext(userDataContext)
 let location = useLocation()
@@ -63,6 +65,7 @@ let location = useLocation()
         <Route path='*' element={<NotFound/>}/>
       </Routes>
       <Ai/>
+      <VirtualStylist/>
     </>
   )
 }

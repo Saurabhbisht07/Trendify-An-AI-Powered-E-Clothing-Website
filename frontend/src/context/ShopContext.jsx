@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { authDataContext } from './authContext'
+import { authDataContext } from './AuthContext'
 import axios from 'axios'
 import { userDataContext } from './UserContext'
 import { toast } from 'react-toastify'
@@ -21,7 +21,18 @@ function ShopContext({children}) {
         try {
             let result = await axios.get(serverUrl + "/api/product/list")
             console.log(result.data)
-            setProducts(result.data)
+            // Deduplicate by name AND image — skip if either was seen before
+            const seenNames  = new Set()
+            const seenImages = new Set()
+            const unique = result.data.filter(p => {
+                const nameKey  = p.name?.trim().toLowerCase()
+                const imageKey = p.image1?.trim()
+                if (seenNames.has(nameKey) || seenImages.has(imageKey)) return false
+                seenNames.add(nameKey)
+                seenImages.add(imageKey)
+                return true
+            })
+            setProducts(unique)
         } catch (error) {
             console.log(error)
         }
@@ -137,6 +148,11 @@ function ShopContext({children}) {
 
     useEffect(()=>{
      getProducts()
+
+     // Refetch products when user returns to this tab (e.g. after adding in admin)
+     const onVisible = () => { if (document.visibilityState === 'visible') getProducts() }
+     document.addEventListener('visibilitychange', onVisible)
+     return () => document.removeEventListener('visibilitychange', onVisible)
     },[])
 
     useEffect(() => {

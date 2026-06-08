@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import open from "../assets/open.mp3"
 function Ai() {
-  let {showSearch , setShowSearch} = useContext(shopDataContext)
+  let {showSearch, setShowSearch, setSearch} = useContext(shopDataContext)
   let navigate = useNavigate()
   let [activeAi,setActiveAi] = useState(false)
   let openingSound = new Audio(open)
@@ -15,7 +15,6 @@ let utterence=new SpeechSynthesisUtterance(message)
 window.speechSynthesis.speak(utterence)
   }
 
-
   const speechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition
   const recognition = new speechRecognition()
    if(!recognition){
@@ -23,57 +22,90 @@ window.speechSynthesis.speak(utterence)
   }
 
   recognition.onresult = (e)=>{
-    const transcript = e.results[0][0].transcript.trim();
- if(transcript.toLowerCase().includes("search") && transcript.toLowerCase().includes("open") && !showSearch){
+    // Convert to lowercase and strip all punctuation (periods, commas, question marks, exclamation points)
+    let rawTranscript = e.results[0][0].transcript.toLowerCase();
+    const transcript = rawTranscript.replace(/[.,!?]/g, '').trim();
+    
+    console.log("Voice Assistant heard:", transcript);
+
+    if(transcript.includes("search") && transcript.includes("open") && !showSearch){
       speak("opening search")
       setShowSearch(true) 
       navigate("/collection")
     }
-    else if(transcript.toLowerCase().includes("search") && transcript.toLowerCase().includes("close") && showSearch){
+    else if(transcript.includes("search") && transcript.includes("close") && showSearch){
       speak("closing search")
       setShowSearch(false) 
-      
     }
-     else if(transcript.toLowerCase().includes("collection") || transcript.toLowerCase().includes("collections") || transcript.toLowerCase().includes("product") || transcript.toLowerCase().includes("products")){
+    else if(transcript.includes("collection") || transcript.includes("product") || transcript.includes("shop")){
       speak("opening collection page")
+      setSearch("")
+      setShowSearch(false) 
       navigate("/collection")
     }
-    else if(transcript.toLowerCase().includes("about") || transcript.toLowerCase().includes("aboutpage") ){
+    else if(transcript.includes("about") || transcript.includes("who are you")){
       speak("opening about page")
       navigate("/about")
       setShowSearch(false) 
     }
-     else if(transcript.toLowerCase().includes("home") || transcript.toLowerCase().includes("homepage") ){
+    else if(transcript.includes("home") || transcript.includes("main page")){
       speak("opening home page")
       navigate("/")
       setShowSearch(false) 
     }
-     else if(transcript.toLowerCase().includes("cart")  || transcript.toLowerCase().includes("kaat")  || transcript.toLowerCase().includes("caat")){
+    else if(transcript.includes("cart") || transcript.includes("bag") || transcript.includes("basket")){
       speak("opening your cart")
       navigate("/cart")
       setShowSearch(false) 
     }
-    else if(transcript.toLowerCase().includes("contact")){
+    else if(transcript.includes("contact") || transcript.includes("help") || transcript.includes("support")){
       speak("opening contact page")
       navigate("/contact")
       setShowSearch(false) 
     }
-   
-     else if(transcript.toLowerCase().includes("order") || transcript.toLowerCase().includes("myorders") || transcript.toLowerCase().includes("orders") || transcript.toLowerCase().includes("my order")){
+    else if(transcript.includes("order") || transcript.includes("purchase")){
       speak("opening your orders page")
       navigate("/order")
       setShowSearch(false) 
     }
-    else{
-      toast.error("Try Again")
-    }
+    else {
+      // Handle suggestions, recommendations, or direct product searches
+      let searchTerms = transcript
+        .replace(/\bsuggest\b/g, '')
+        .replace(/\brecommend\b/g, '')
+        .replace(/\bclothes\b/g, '')
+        .replace(/\bcloth\b/g, '')
+        .replace(/\bplease\b/g, '')
+        .replace(/\bshow\b/g, '')
+        .replace(/\bme\b/g, '')
+        .replace(/\bsome\b/g, '')
+        .replace(/\bfor\b/g, '')
+        .replace(/\bcan you\b/g, '')
+        .replace(/\blooking\b/g, '')
+        .replace(/\bfind\b/g, '')
+        .trim();
 
+      // Normalize extra spaces that might have been left behind
+      searchTerms = searchTerms.replace(/\s+/g, ' ');
+
+      if (searchTerms) {
+          speak(`Searching for ${searchTerms}`)
+          setSearch(searchTerms)
+          setShowSearch(true)
+          navigate("/collection")
+      } else {
+          speak("Sure, taking you to our top recommendations")
+          setSearch("")
+          setShowSearch(false)
+          navigate("/collection")
+      }
+    }
   }
   recognition.onend=()=>{
    setActiveAi(false)
   }
   return (
-    <div className='fixed lg:bottom-[20px] md:bottom-[40px] bottom-[80px] left-[2%] ' onClick={()=>{recognition.start();
+    <div className='fixed lg:bottom-[40px] md:bottom-[60px] bottom-[80px] right-[5%] z-50' onClick={()=>{recognition.start();
     openingSound.play()
     setActiveAi(true)
     }}>

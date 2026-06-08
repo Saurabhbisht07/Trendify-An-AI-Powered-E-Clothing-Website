@@ -26,16 +26,16 @@ function Nav() {
         
     }
   return (
-    <div className='w-[100vw] h-[70px] bg-[#dcdbdbf8] z-10 fixed top-0 flex  items-center justify-between px-[30px] overflow-x-hidden shadow-md shadow-black '>
+    <div className='w-[100vw] h-[70px] bg-[#151113e6] backdrop-blur-lg border-b border-[#ffffff10] z-10 fixed top-0 flex  items-center justify-between px-[30px] overflow-x-hidden shadow-md'>
         <div className='w-[30%]  flex items-center justify-start   gap-[10px] cursor-pointer ' onClick={()=>navigate("/")}>
-        <img src={logo} alt=""  className='w-[30px]'/>
-        <h1 className='text-[25px] text-[black] font-sans '>OneCart</h1>
+        <img src={logo} alt="Trendify"  className='w-[35px] drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]'/>
+        <h1 className='text-[28px] md:text-[35px] text-white font-serif tracking-widest'>Trendify</h1>
 
        
 
 
         </div>
-         <button className='text-[15px] hover:border-[2px] border-[#89daea] cursor-pointer bg-[#000000ca] py-[10px] px-[20px] rounded-2xl text-white ' onClick={logOut}>LogOut</button>
+         <button className='text-[13px] cursor-pointer bg-gradient-to-r from-[#d97d66] to-[#e4ac7a] py-[8px] px-[20px] rounded-lg text-white font-bold tracking-[0.1em] hover:opacity-90 transition-opacity shadow-lg uppercase' onClick={logOut}>LogOut</button>
       
     </div>
   )

@@ -8,24 +8,26 @@ function BestSeller() {
     let [bestSeller,setBestSeller] = useState([])
 
     useEffect(()=>{
-    let filterProduct = products.filter((item) => item.bestseller)
-
-    setBestSeller(filterProduct.slice(0,4));
+        let filterProduct = products.filter((item) => item.bestseller);
+        setBestSeller([...filterProduct].reverse().slice(0,4));
     },[products])
+
   return (
-    <div>
-        <div className='h-[8%] w-[100%] text-center mt-[50px] '>
-            <Title text1={"BEST"} text2={"SELLER"}/> 
-            <p className='w-[100%] m-auto text-[13px] md:text-[20px] px-[10px] text-blue-100'>Tried, Tested, Loved – Discover Our All-Time Best Sellers.</p>
+    <div className='w-full px-8 md:px-16'>
+        <div className='text-center mb-16 relative z-10'>
+            <div className='flex justify-center mb-4'><Title text1={"BEST"} text2={"SELLERS"}/></div>
+            <p className='text-[#808080] text-[15px] max-w-[600px] mx-auto leading-relaxed'>
+                Tried, Tested, and Loved – Discover our all-time highest rated pieces that define the Trendify aesthetic.
+            </p>
         </div>
-        <div className='w-[100%] h-[50%] mt-[30px] flex items-center justify-center flex-wrap gap-[50px]'>
+
+        <div className='max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8'>
             {
              bestSeller.map((item,index)=>(
                 <Card key={index} name={item.name} id={item._id} price={item.price} image={item.image1}/>
              ))
             }
         </div>
-      
     </div>
   )
 }
