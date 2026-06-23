@@ -20,7 +20,7 @@ let app = express()
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin: ["https://trendify-frontend-wy46.onrender.com", "http://localhost:5174"],
+    origin: ["https://trendify-frontend-wy46.onrender.com", "https://trendify-admin-b3zr.onrender.com"],
     credentials: true
 }))
 
