@@ -10,5 +10,8 @@ IN THIS PROJECT
 ✅ Add to Cart + Checkout + Order Booking 
 ✅ Real-time Stock Updates 
 ✅ AI-Powered Recommendations 
+
+
+Deployment
 Website:https://trendify-frontend-wy46.onrender.com
 Admin:https://trendify-admin-b3zr.onrender.com
